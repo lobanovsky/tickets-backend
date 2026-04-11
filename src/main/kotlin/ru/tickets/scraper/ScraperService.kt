@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import ru.tickets.domain.NotificationService
 import ru.tickets.domain.PerformanceService
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.milliseconds
 
 class ScraperService(
     private val database: Database,
@@ -31,7 +32,7 @@ class ScraperService(
                 val theatreId = performanceService.findTheatreIdBySlug(scraper.theatreSlug)
                 if (theatreId == null) {
                     log.warn("[${scraper.theatreSlug}] Theatre not found in DB, skipping")
-                    delay(60_000L)
+                    delay(60_000L.milliseconds)
                     continue
                 }
 
@@ -75,7 +76,7 @@ class ScraperService(
                 log.error("[${scraper.theatreSlug}] Ошибка в цикле скрапера: ${e.message}")
             }
 
-            delay(Random.nextLong(5_000L, 30_000L))
+            delay(Random.nextLong(5_000L, 30_000L).milliseconds)
         }
     }
 }
