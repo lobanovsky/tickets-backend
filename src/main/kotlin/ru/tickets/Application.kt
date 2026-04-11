@@ -27,14 +27,17 @@ fun Application.startScrapers() {
     val performanceService = PerformanceService(database)
     val notificationService = NotificationService(database)
 
+    // Один скрапер на каждый театр — каждый умеет парсить расписание своего сайта
     val scrapers = listOf(
         RamtScraper(),
         NationsScraper(),
         VakhtangovScraper(),
         FomenkiScraper()
     )
+    // Оркестратор: запускает все скраперы по расписанию, сохраняет спектакли и рассылает уведомления
     val scraperService = ScraperService(database, performanceService, notificationService, scrapers)
 
+    // Стартуем после полной инициализации сервера, чтобы БД и сервисы были готовы
     monitor.subscribe(ApplicationStarted) {
         scraperService.start()
     }
