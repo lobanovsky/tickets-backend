@@ -1,4 +1,4 @@
-name: to-ubuntu
+name: to-avocado
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/planner:${{ env.SHORT_SHA }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/tickets-backend:${{ env.SHORT_SHA }}
 
   deploy:
     name: Deploy to Ubuntu Server
