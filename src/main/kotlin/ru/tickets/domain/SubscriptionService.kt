@@ -1,6 +1,7 @@
 package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.*
+import org.slf4j.LoggerFactory
 import ru.tickets.db.schema.Performances
 import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Theatres
@@ -11,13 +12,16 @@ import java.util.*
 
 class SubscriptionService(private val database: Database) {
 
+    private val log = LoggerFactory.getLogger(SubscriptionService::class.java)
+
     suspend fun subscribe(telegramId: Long, performanceId: UUID) = dbQuery(database) {
         val userRow = Users.selectAll().where { Users.telegramId eq telegramId }.singleOrNull()
             ?: throw NotFoundException("User not found")
         val userId = userRow[Users.id]
 
-        Performances.selectAll().where { Performances.id eq performanceId }.singleOrNull()
+        val performanceRow = Performances.selectAll().where { Performances.id eq performanceId }.singleOrNull()
             ?: throw NotFoundException("Performance not found")
+        val performanceTitle = performanceRow[Performances.title]
 
         val existing = Subscriptions.selectAll()
             .where { (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId) }
@@ -36,6 +40,9 @@ class SubscriptionService(private val database: Database) {
                 it[isActive] = true
             }
         }
+
+        val userName = userRow[Users.username]?.let { "@$it" } ?: userRow[Users.firstName]
+        log.info("Подписка: $userName (telegramId=$telegramId), спектакль=\"$performanceTitle\" ($performanceId)")
     }
 
     suspend fun unsubscribe(telegramId: Long, performanceId: UUID) = dbQuery(database) {
@@ -43,11 +50,17 @@ class SubscriptionService(private val database: Database) {
             ?: throw NotFoundException("User not found")
         val userId = userRow[Users.id]
 
+        val performanceRow = Performances.selectAll().where { Performances.id eq performanceId }.singleOrNull()
+        val performanceTitle = performanceRow?.get(Performances.title) ?: performanceId.toString()
+
         Subscriptions.update({
             (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId)
         }) {
             it[isActive] = false
         }
+
+        val userName = userRow[Users.username]?.let { "@$it" } ?: userRow[Users.firstName]
+        log.info("Отписка: $userName (telegramId=$telegramId), спектакль=\"$performanceTitle\" ($performanceId)")
     }
 
     suspend fun getUserSubscriptions(telegramId: Long): List<SubscriptionResponse> = dbQuery(database) {
