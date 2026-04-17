@@ -4,6 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.slf4j.LoggerFactory
+import ru.tickets.domain.BotWebhookClient
 import ru.tickets.domain.NotificationService
 import ru.tickets.domain.PerformanceService
 import kotlin.random.Random
@@ -15,6 +16,7 @@ private val REPERTOIRE_UPDATE_INTERVAL = 7.days
 class ScraperService(
     private val performanceService: PerformanceService,
     private val notificationService: NotificationService,
+    private val webhookClient: BotWebhookClient,
     private val scrapers: List<WebScraper>
 ) {
     private val log = LoggerFactory.getLogger(ScraperService::class.java)
@@ -70,8 +72,14 @@ class ScraperService(
                                                 if (s.time.isNotBlank()) append(" ${s.time}")
                                             }
                                         }
-                                        notificationService.createNotifications(perf.id, summary)
-                                        log.info("[${scraper.theatreSlug}] Билеты найдены: ${perf.title}")
+                                        val created = notificationService.createNotifications(perf.id, summary)
+                                        log.info("[${scraper.theatreSlug}] Билеты найдены: ${perf.title}, уведомлений: ${created.size}")
+                                        for (notif in created) {
+                                            if (webhookClient.push(notif)) {
+                                                notificationService.acknowledge(java.util.UUID.fromString(notif.id))
+                                                log.info("[${scraper.theatreSlug}] Вебхук отправлен: telegramId=${notif.telegramId}")
+                                            }
+                                        }
                                     }
                                 } catch (e: Exception) {
                                     log.error("[${scraper.theatreSlug}] Ошибка скрапинга ${perf.url}: ${e.message}")

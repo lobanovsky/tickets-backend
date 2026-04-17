@@ -10,6 +10,20 @@ postgres:
   user: ${DB_USER:tickets}
   password: ${DB_PASSWORD:tickets}
 
+bot-webhooks:
+  vakhtangov:
+    url: ${BOT_WEBHOOK_URL_VAKHTANGOV:}
+    secret: ${BOT_WEBHOOK_SECRET_VAKHTANGOV:}
+  ramt:
+    url: ${BOT_WEBHOOK_URL_RAMT:}
+    secret: ${BOT_WEBHOOK_SECRET_RAMT:}
+  nations:
+    url: ${BOT_WEBHOOK_URL_NATIONS:}
+    secret: ${BOT_WEBHOOK_SECRET_NATIONS:}
+  fomenki:
+    url: ${BOT_WEBHOOK_URL_FOMENKI:}
+    secret: ${BOT_WEBHOOK_SECRET_FOMENKI:}
+
 api-keys:
   ramt: ${RAMT_API_KEY:ramt-secret}
   nations: ${NATIONS_API_KEY:nations-secret}

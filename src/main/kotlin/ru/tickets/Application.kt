@@ -3,6 +3,8 @@ package ru.tickets
 import io.ktor.server.application.*
 import ru.tickets.db.DatabaseKey
 import ru.tickets.db.configureDatabases
+import ru.tickets.domain.BotWebhookClient
+import ru.tickets.domain.BotWebhookConfig
 import ru.tickets.domain.NotificationService
 import ru.tickets.domain.PerformanceService
 import ru.tickets.routes.configureRouting
@@ -27,6 +29,14 @@ fun Application.startScrapers() {
     val performanceService = PerformanceService(database)
     val notificationService = NotificationService(database)
 
+    val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki").associateWith { slug ->
+        BotWebhookConfig(
+            url = environment.config.propertyOrNull("bot-webhooks.$slug.url")?.getString() ?: "",
+            secret = environment.config.propertyOrNull("bot-webhooks.$slug.secret")?.getString() ?: ""
+        )
+    }
+    val webhookClient = BotWebhookClient(webhooks)
+
     // Один скрапер на каждый театр — каждый умеет парсить расписание своего сайта
     val scrapers = listOf(
         RamtScraper(),
@@ -35,7 +45,7 @@ fun Application.startScrapers() {
         FomenkiScraper()
     )
     // Оркестратор: запускает все скраперы по расписанию, сохраняет спектакли и рассылает уведомления
-    val scraperService = ScraperService(performanceService, notificationService, scrapers)
+    val scraperService = ScraperService(performanceService, notificationService, webhookClient, scrapers)
 
     // Стартуем после полной инициализации сервера, чтобы БД и сервисы были готовы
     monitor.subscribe(ApplicationStarted) {

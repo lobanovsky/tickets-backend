@@ -14,8 +14,15 @@ import java.util.*
 
 class NotificationService(private val database: Database) {
 
-    fun createNotifications(performanceId: UUID, scheduleSummary: String) {
+    fun createNotifications(performanceId: UUID, scheduleSummary: String): List<PendingNotificationResponse> {
+        val created = mutableListOf<PendingNotificationResponse>()
         transaction(database) {
+            val perfRow = Performances
+                .join(Theatres, JoinType.INNER, Performances.theatreId, Theatres.id)
+                .selectAll()
+                .where { Performances.id eq performanceId }
+                .singleOrNull() ?: return@transaction
+
             val subscribers = Subscriptions
                 .join(Users, JoinType.INNER, Subscriptions.userId, Users.id)
                 .selectAll()
@@ -24,7 +31,6 @@ class NotificationService(private val database: Database) {
             for (row in subscribers) {
                 val userId = row[Subscriptions.userId]
 
-                // Avoid duplicate unsent notifications for the same user+performance
                 val alreadyPending = PendingNotifications.selectAll()
                     .where {
                         (PendingNotifications.userId eq userId) and
@@ -33,11 +39,11 @@ class NotificationService(private val database: Database) {
                     }.count() > 0
 
                 if (!alreadyPending) {
-                    PendingNotifications.insert {
+                    val notifId = PendingNotifications.insert {
                         it[PendingNotifications.userId] = userId
                         it[PendingNotifications.performanceId] = performanceId
                         it[PendingNotifications.scheduleSummary] = scheduleSummary
-                    }
+                    }[PendingNotifications.id]
 
                     Subscriptions.update({
                         (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId)
@@ -46,9 +52,22 @@ class NotificationService(private val database: Database) {
                             it[notificationCount] = Subscriptions.notificationCount + 1
                         }
                     }
+
+                    created.add(
+                        PendingNotificationResponse(
+                            id = notifId.toString(),
+                            telegramId = row[Users.telegramId],
+                            performanceTitle = perfRow[Performances.title],
+                            performanceUrl = perfRow[Performances.url],
+                            theatreSlug = perfRow[Theatres.slug],
+                            scheduleSummary = scheduleSummary,
+                            createdAt = LocalDateTime.now().toString()
+                        )
+                    )
                 }
             }
         }
+        return created
     }
 
     suspend fun getPendingForTheatre(theatreSlug: String): List<PendingNotificationResponse> = dbQuery(database) {
