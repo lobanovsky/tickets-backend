@@ -60,6 +60,10 @@ jobs:
           echo "DB_URL=${{ secrets.DB_URL }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "VAKHTANGOV_API_KEY=${{ secrets.VAKHTANGOV_API_KEY }}" >> .env
+          echo "FOMENKI_API_KEY=${{ secrets.FOMENKI_API_KEY }}" >> .env
+          echo "NATIONS_API_KEY=${{ secrets.NATIONS_API_KEY }}" >> .env
+          echo "RAMT_API_KEY=${{ secrets.RAMT_API_KEY }}" >> .env          
           echo "BOT_WEBHOOK_URL_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_URL_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_SECRET_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_URL_FOMENKI=${{ secrets.BOT_WEBHOOK_URL_FOMENKI }}" >> .env
