@@ -55,7 +55,7 @@ class PerformanceService(private val database: Database) {
     suspend fun findWithActiveSubscribers(theatreId: UUID): List<PerformanceRow> = dbQuery(database) {
         Performances
             .join(Subscriptions, JoinType.INNER, Performances.id, Subscriptions.performanceId)
-            .select(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene)
+            .select(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive)
             .where { (Performances.theatreId eq theatreId) and (Subscriptions.isActive eq true) and (Performances.isActive eq true) }
             .groupBy(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive)
             .map { row ->
