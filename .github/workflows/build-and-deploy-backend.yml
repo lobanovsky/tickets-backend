@@ -60,10 +60,6 @@ jobs:
           echo "DB_URL=${{ secrets.DB_URL }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "TELEGRAM_BOT_TOKEN_VAKHTANGOV=${{ secrets.TELEGRAM_BOT_TOKEN_VAKHTANGOV }}" >> .env
-          echo "TELEGRAM_BOT_TOKEN_FOMENKI=${{ secrets.TELEGRAM_BOT_TOKEN_FOMENKI }}" >> .env
-          echo "TELEGRAM_BOT_TOKEN_NATIONS=${{ secrets.TELEGRAM_BOT_TOKEN_NATIONS }}" >> .env
-          echo "TELEGRAM_BOT_TOKEN_RAMT=${{ secrets.TELEGRAM_BOT_TOKEN_RAMT }}" >> .env
           echo "BOT_WEBHOOK_URL_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_URL_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_SECRET_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_URL_FOMENKI=${{ secrets.BOT_WEBHOOK_URL_FOMENKI }}" >> .env

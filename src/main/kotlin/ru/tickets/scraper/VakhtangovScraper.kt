@@ -13,8 +13,10 @@ class VakhtangovScraper : BaseWebScraper() {
         val performances = mutableListOf<ScrapedPerformance>()
         try {
             val doc = Jsoup.connect("https://vakhtangov.ru/shows/now/").get()
+            val allowedScenes = setOf("Основная сцена", "Новая сцена", "Симоновская сцена")
             for (section in doc.select("section.shows-stage")) {
                 val scene = section.selectFirst("header.shows-stage-header h2")?.text() ?: continue
+                if (scene !in allowedScenes) continue
                 for (show in section.select("article.shows-item")) {
                     val link = show.selectFirst("a") ?: continue
                     val title = link.selectFirst("h1")?.text() ?: continue

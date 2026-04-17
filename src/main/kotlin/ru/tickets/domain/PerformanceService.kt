@@ -6,11 +6,10 @@ import ru.tickets.db.schema.Performances
 import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Theatres
 import ru.tickets.db.schema.Users
-import ru.tickets.models.responses.PerformanceResponse
 import ru.tickets.models.responses.PerformanceWithStatusResponse
 import java.util.*
 
-data class PerformanceRow(val id: UUID, val theatreId: UUID, val title: String, val url: String, val scene: String?)
+data class PerformanceRow(val id: UUID, val theatreId: UUID, val title: String, val url: String, val scene: String?, val isActive: Boolean = true)
 
 class PerformanceService(private val database: Database) {
 
@@ -38,7 +37,7 @@ class PerformanceService(private val database: Database) {
         } else emptySet()
 
         Performances.selectAll()
-            .where { Performances.theatreId eq theatreId }
+            .where { (Performances.theatreId eq theatreId) and (Performances.isActive eq true) }
             .orderBy(Performances.title, SortOrder.ASC)
             .map { row ->
                 val perfId = row[Performances.id]
@@ -57,15 +56,16 @@ class PerformanceService(private val database: Database) {
         Performances
             .join(Subscriptions, JoinType.INNER, Performances.id, Subscriptions.performanceId)
             .select(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene)
-            .where { (Performances.theatreId eq theatreId) and (Subscriptions.isActive eq true) }
-            .groupBy(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene)
+            .where { (Performances.theatreId eq theatreId) and (Subscriptions.isActive eq true) and (Performances.isActive eq true) }
+            .groupBy(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive)
             .map { row ->
                 PerformanceRow(
                     id = row[Performances.id],
                     theatreId = row[Performances.theatreId],
                     title = row[Performances.title],
                     url = row[Performances.url],
-                    scene = row[Performances.scene]
+                    scene = row[Performances.scene],
+                    isActive = row[Performances.isActive]
                 )
             }
     }
@@ -82,24 +82,28 @@ class PerformanceService(private val database: Database) {
                         it[title] = perf.title
                         it[url] = perf.url
                         it[scene] = perf.scene
+                        it[isActive] = true
                     }
                 } else {
                     Performances.update({ (Performances.theatreId eq theatreId) and (Performances.url eq perf.url) }) {
                         it[title] = perf.title
                         it[scene] = perf.scene
+                        it[isActive] = true
                     }
                 }
+            }
+
+            val scrapedUrls = scraped.map { it.url }
+            if (scrapedUrls.isNotEmpty()) {
+                Performances.update({
+                    (Performances.theatreId eq theatreId) and
+                    (Performances.url notInList scrapedUrls) and
+                    (Performances.isActive eq true)
+                }) { it[isActive] = false }
             }
         }
     }
 
-    fun toResponse(row: PerformanceRow): PerformanceResponse = PerformanceResponse(
-        id = row.id.toString(),
-        theatreId = row.theatreId.toString(),
-        title = row.title,
-        url = row.url,
-        scene = row.scene
-    )
 }
 
 data class ScrapedPerformance(val title: String, val url: String, val scene: String? = null)

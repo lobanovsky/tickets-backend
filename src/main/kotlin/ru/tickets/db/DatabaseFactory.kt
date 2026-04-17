@@ -3,7 +3,6 @@ package ru.tickets.db
 import io.ktor.server.application.*
 import io.ktor.util.*
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.tickets.db.schema.*
 
@@ -23,9 +22,10 @@ fun Application.configureDatabases() {
     attributes.put(DatabaseKey, database)
 
     transaction(database) {
-        SchemaUtils.create(Theatres, Performances, Users, Subscriptions, PendingNotifications)
+        arrayOf(Theatres, Performances, Users, Subscriptions, PendingNotifications)
         exec("CREATE UNIQUE INDEX IF NOT EXISTS performances_theatre_url_idx ON performances (theatre_id, url)")
         exec("CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_user_perf_idx ON subscriptions (user_id, performance_id)")
+        exec("UPDATE performances SET is_active = TRUE WHERE is_active IS NULL")
     }
 
     seedTheatres(database)
