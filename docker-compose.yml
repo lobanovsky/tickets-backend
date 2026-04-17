@@ -26,7 +26,7 @@ services:
     volumes:
       - ./logs:/app/logs
     ports:
-      - "8077:8080"
+      - "8078:8080"
     env_file:
       - .env
     networks:
