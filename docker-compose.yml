@@ -1,0 +1,39 @@
+services:
+  tickets-backend:
+    image: lobanovsky/tickets-backend:${TAG}
+    container_name: tickets-backend
+    restart: always
+    environment:
+      TZ: Europe/Moscow
+      # database credentials
+      DB_URL: ${DB_URL}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      # telegram tokens
+      TELEGRAM_BOT_TOKEN_VAKHTANGOV: ${TELEGRAM_BOT_TOKEN_VAKHTANGOV}
+      TELEGRAM_BOT_TOKEN_FOMENKI: ${TELEGRAM_BOT_TOKEN_FOMENKI}
+      TELEGRAM_BOT_TOKEN_NATIONS: ${TELEGRAM_BOT_TOKEN_NATIONS}
+      TELEGRAM_BOT_TOKEN_RAMT: ${TELEGRAM_BOT_TOKEN_RAMT}
+      # webhooks
+      BOT_WEBHOOK_URL_VAKHTANGOV: ${BOT_WEBHOOK_URL_VAKHTANGOV}
+      BOT_WEBHOOK_SECRET_VAKHTANGOV: ${BOT_WEBHOOK_SECRET_VAKHTANGOV}
+      BOT_WEBHOOK_URL_FOMENKI: ${BOT_WEBHOOK_URL_FOMENKI}
+      BOT_WEBHOOK_SECRET_FOMENKI: ${BOT_WEBHOOK_SECRET_FOMENKI}
+      BOT_WEBHOOK_URL_NATIONS: ${BOT_WEBHOOK_URL_NATIONS}
+      BOT_WEBHOOK_SECRET_NATIONS: ${BOT_WEBHOOK_SECRET_NATIONS}
+      BOT_WEBHOOK_URL_RAMT: ${BOT_WEBHOOK_URL_RAMT}
+      BOT_WEBHOOK_SECRET_RAMT: ${BOT_WEBHOOK_SECRET_RAMT}
+      BOT_WEBHOOK_URL: ${BOT_WEBHOOK_URL}
+      BOT_WEBHOOK_SECRET: ${BOT_WEBHOOK_SECRET}
+    volumes:
+      - ./logs:/app/logs
+    ports:
+      - "8077:8080"
+    env_file:
+      - .env
+    networks:
+        - tickets-network
+
+networks:
+    tickets-network:
+        external: true
