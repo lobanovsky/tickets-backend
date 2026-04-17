@@ -3,21 +3,23 @@ package ru.tickets.scraper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import org.jetbrains.exposed.sql.Database
 import org.slf4j.LoggerFactory
 import ru.tickets.domain.NotificationService
 import ru.tickets.domain.PerformanceService
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
+private val REPERTOIRE_UPDATE_INTERVAL = 7.days
+
 class ScraperService(
-    private val database: Database,
     private val performanceService: PerformanceService,
     private val notificationService: NotificationService,
     private val scrapers: List<WebScraper>
 ) {
     private val log = LoggerFactory.getLogger(ScraperService::class.java)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val lastRepertoireUpdate = mutableMapOf<String, Long>()
 
     fun start() {
         scrapers.forEach { scraper ->
@@ -36,10 +38,16 @@ class ScraperService(
                     continue
                 }
 
-                // Step 1: Update repertoire
-                val scraped = withContext(Dispatchers.IO) { scraper.scrapeRepertoire() }
-                if (scraped.isNotEmpty()) {
-                    performanceService.upsertPerformances(theatreId, scraped)
+                // Step 1: Update repertoire (at most once per REPERTOIRE_UPDATE_INTERVAL)
+                val now = System.currentTimeMillis()
+                val lastUpdate = lastRepertoireUpdate[scraper.theatreSlug]
+                if (lastUpdate == null || (now - lastUpdate) >= REPERTOIRE_UPDATE_INTERVAL.inWholeMilliseconds) {
+                    val scraped = withContext(Dispatchers.IO) { scraper.scrapeRepertoire() }
+                    if (scraped.isNotEmpty()) {
+                        performanceService.upsertPerformances(theatreId, scraped)
+                    }
+                    lastRepertoireUpdate[scraper.theatreSlug] = now
+                    log.info("[${scraper.theatreSlug}] Репертуар обновлён")
                 }
 
                 // Step 2: Check tickets for performances with active subscribers

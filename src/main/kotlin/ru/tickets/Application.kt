@@ -35,7 +35,7 @@ fun Application.startScrapers() {
         FomenkiScraper()
     )
     // Оркестратор: запускает все скраперы по расписанию, сохраняет спектакли и рассылает уведомления
-    val scraperService = ScraperService(database, performanceService, notificationService, scrapers)
+    val scraperService = ScraperService(performanceService, notificationService, scrapers)
 
     // Стартуем после полной инициализации сервера, чтобы БД и сервисы были готовы
     monitor.subscribe(ApplicationStarted) {
