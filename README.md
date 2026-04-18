@@ -72,28 +72,38 @@ Authorization: Bearer <api-key>
 ---
 
 #### `GET /users/{telegramId}/subscriptions`
-Список активных подписок пользователя. Используется для команды `/mysubs`.
+Список активных подписок пользователя, сгруппированных по театрам. Используется для команды `/mysubs`.
 
 **Ответ `200`:**
 ```json
 [
   {
-    "id": "uuid",
-    "performance": {
-      "id": "uuid",
-      "theatreId": "uuid",
-      "title": "Гамлет",
-      "url": "https://ramt.ru/plays/item/hamlet/",
-      "scene": null
-    },
     "theatre": {
       "id": "uuid",
       "slug": "ramt",
       "name": "РАМТ",
       "websiteUrl": "https://ramt.ru"
     },
-    "subscribedAt": "2026-03-28T15:00:00",
-    "notificationCount": 2
+    "subscriptions": [
+      {
+        "id": "uuid",
+        "performance": {
+          "id": "uuid",
+          "theatreId": "uuid",
+          "title": "Гамлет",
+          "url": "https://ramt.ru/plays/item/hamlet/",
+          "scene": null
+        },
+        "theatre": {
+          "id": "uuid",
+          "slug": "ramt",
+          "name": "РАМТ",
+          "websiteUrl": "https://ramt.ru"
+        },
+        "subscribedAt": "2026-03-28T15:00:00",
+        "notificationCount": 2
+      }
+    ]
   }
 ]
 ```
@@ -231,6 +241,29 @@ Authorization: Bearer <api-key>
 
 ---
 
+#### `GET /admin/users`
+Список всех пользователей. Только admin-ключ.
+
+Параметр `hasSubscriptions` необязателен:
+- `?hasSubscriptions=true` — только пользователи с хотя бы одной подпиской
+- `?hasSubscriptions=false` — только пользователи без подписок
+
+**Ответ `200`:**
+```json
+[
+  {
+    "id": "uuid",
+    "telegramId": 123456789,
+    "firstName": "Иван",
+    "lastName": "Иванов",
+    "username": "ivan",
+    "isActive": true
+  }
+]
+```
+
+---
+
 #### `GET /admin/stats`
 Общая статистика по всем театрам. Только admin-ключ.
 
@@ -285,7 +318,14 @@ Authorization: Bearer <api-key>
 | `VAKHTANGOV_API_KEY` | `vakhtangov-secret` | API-ключ для бота Вахтангова |
 | `FOMENKI_API_KEY` | `fomenki-secret` | API-ключ для бота Фоменко |
 | `ADMIN_API_KEY` | `admin-secret` | Мастер API-ключ |
-| `CHROMEDRIVER_PATH` | (авто) | Путь к chromedriver (для Selenium) |
+| `BOT_WEBHOOK_URL_RAMT` | — | URL вебхука бота РАМТ |
+| `BOT_WEBHOOK_SECRET_RAMT` | — | Секрет вебхука бота РАМТ |
+| `BOT_WEBHOOK_URL_NATIONS` | — | URL вебхука бота Театра Наций |
+| `BOT_WEBHOOK_SECRET_NATIONS` | — | Секрет вебхука бота Театра Наций |
+| `BOT_WEBHOOK_URL_VAKHTANGOV` | — | URL вебхука бота Вахтангова |
+| `BOT_WEBHOOK_SECRET_VAKHTANGOV` | — | Секрет вебхука бота Вахтангова |
+| `BOT_WEBHOOK_URL_FOMENKI` | — | URL вебхука бота Фоменко |
+| `BOT_WEBHOOK_SECRET_FOMENKI` | — | Секрет вебхука бота Фоменко |
 
 ## Поток интеграции бота
 
