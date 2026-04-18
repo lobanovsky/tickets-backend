@@ -60,6 +60,12 @@ data class PendingNotificationResponse(
 )
 
 @Serializable
+data class SubscriptionsByTheatreResponse(
+    val theatre: TheatreResponse,
+    val subscriptions: List<SubscriptionResponse>
+)
+
+@Serializable
 data class AdminSubscriberInfo(
     val telegramId: Long,
     val firstName: String,
