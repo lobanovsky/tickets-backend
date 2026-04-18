@@ -7,7 +7,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import ru.tickets.domain.SubscriptionService
 import ru.tickets.domain.UserService
+import ru.tickets.models.ErrorResponse
 import ru.tickets.models.requests.SyncUserRequest
+import ru.tickets.security.BotPrincipal
 
 fun Route.userRoutes(userService: UserService, subscriptionService: SubscriptionService) {
     authenticate("bot-key") {
@@ -20,6 +22,13 @@ fun Route.userRoutes(userService: UserService, subscriptionService: Subscription
             val telegramId = call.parameters["telegramId"]?.toLongOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid telegramId"))
             call.respond(subscriptionService.getUserSubscriptions(telegramId))
+        }
+
+        get("/admin/users") {
+            val principal = call.principal<BotPrincipal>()!!
+            if (!principal.isAdmin) return@get call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", "Forbidden"))
+            val hasSubscriptions = call.request.queryParameters["hasSubscriptions"]?.toBooleanStrictOrNull()
+            call.respond(userService.findAll(hasSubscriptions))
         }
     }
 }

@@ -1,15 +1,39 @@
 package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
+import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Users
 import ru.tickets.models.requests.SyncUserRequest
 import ru.tickets.models.responses.UserResponse
 
 class UserService(private val database: Database) {
+
+    suspend fun findAll(hasSubscriptions: Boolean? = null): List<UserResponse> = dbQuery(database) {
+        val query = when (hasSubscriptions) {
+            true -> Users.selectAll().where {
+                Users.id inSubQuery Subscriptions.select(Subscriptions.userId).withDistinct()
+            }
+
+            false -> Users.selectAll().where {
+                Users.id notInSubQuery Subscriptions.select(Subscriptions.userId).withDistinct()
+            }
+
+            null -> Users.selectAll()
+        }
+        query.map { row ->
+            UserResponse(
+                id = row[Users.id].toString(),
+                telegramId = row[Users.telegramId],
+                firstName = row[Users.firstName],
+                lastName = row[Users.lastName],
+                username = row[Users.username],
+                isActive = row[Users.isActive]
+            )
+        }
+    }
 
     suspend fun syncUser(req: SyncUserRequest): UserResponse = dbQuery(database) {
         val existing = Users.selectAll().where { Users.telegramId eq req.telegramId }.singleOrNull()
