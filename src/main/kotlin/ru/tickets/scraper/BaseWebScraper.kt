@@ -1,7 +1,9 @@
 package ru.tickets.scraper
 
 import com.microsoft.playwright.BrowserType
+import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
+import com.microsoft.playwright.options.WaitUntilState
 
 abstract class BaseWebScraper : WebScraper {
 
@@ -14,7 +16,9 @@ abstract class BaseWebScraper : WebScraper {
             )
             browser.use {
                 val page = browser.newPage()
-                page.navigate(url)
+                page.navigate(url, Page.NavigateOptions()
+                    .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+                    .setTimeout(60_000.0))
                 return page.content()
             }
         }
