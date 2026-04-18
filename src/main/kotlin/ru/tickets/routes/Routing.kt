@@ -50,6 +50,7 @@ fun Application.configureRouting() {
             call.respondText("Tickets API is running")
         }
         route("/api") {
+            theatreRoutes(theatreService)
             userRoutes(userService, subscriptionService)
             performanceRoutes(performanceService)
             subscriptionRoutes(subscriptionService)

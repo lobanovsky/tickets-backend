@@ -110,6 +110,25 @@ Authorization: Bearer <api-key>
 
 ---
 
+### Театры
+
+#### `GET /theatres`
+Список всех театров.
+
+**Ответ `200`:**
+```json
+[
+  {
+    "id": "uuid",
+    "slug": "ramt",
+    "name": "РАМТ",
+    "websiteUrl": "https://ramt.ru"
+  }
+]
+```
+
+---
+
 ### Спектакли
 
 #### `GET /theatres/{slug}/performances?telegramId={id}`
