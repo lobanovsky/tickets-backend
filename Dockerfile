@@ -5,7 +5,7 @@ COPY . .
 
 RUN gradle clean build -x test
 
-FROM eclipse-temurin:21-jdk-jammy
+FROM mcr.microsoft.com/playwright/java:v1.52.0-noble
 WORKDIR /app
 COPY --from=builder /app/build/libs/tickets-backend-all.jar app.jar
 

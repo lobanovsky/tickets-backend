@@ -1,34 +1,22 @@
 package ru.tickets.scraper
 
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.chrome.ChromeDriver
-import org.openqa.selenium.chrome.ChromeOptions
+import com.microsoft.playwright.BrowserType
+import com.microsoft.playwright.Playwright
 
 abstract class BaseWebScraper : WebScraper {
 
     protected fun fetchHtmlWithSelenium(url: String): String? {
-        val driver = createDriver()
-        return try {
-            driver[url]
-            driver.pageSource
-        } finally {
-            driver.quit()
+        Playwright.create().use { playwright ->
+            val browser = playwright.chromium().launch(
+                BrowserType.LaunchOptions()
+                    .setHeadless(true)
+                    .setArgs(listOf("--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--no-zygote"))
+            )
+            browser.use {
+                val page = browser.newPage()
+                page.navigate(url)
+                return page.content()
+            }
         }
-    }
-
-    private fun createDriver(): WebDriver {
-        val chromedriverPath = System.getenv("CHROMEDRIVER_PATH")
-        if (!chromedriverPath.isNullOrBlank()) {
-            System.setProperty("webdriver.chrome.driver", chromedriverPath)
-        }
-        val options = ChromeOptions().apply {
-            addArguments("--headless=new")
-            addArguments("--disable-gpu")
-            addArguments("--no-sandbox")
-            addArguments("--disable-setuid-sandbox")
-            addArguments("--disable-dev-shm-usage")
-            addArguments("--no-zygote")
-        }
-        return ChromeDriver(options)
     }
 }

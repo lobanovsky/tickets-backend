@@ -70,6 +70,29 @@ class NotificationService(private val database: Database) {
         return created
     }
 
+    suspend fun getPendingForPerformance(performanceId: UUID): List<PendingNotificationResponse> = dbQuery(database) {
+        PendingNotifications
+            .join(Users, JoinType.INNER, PendingNotifications.userId, Users.id)
+            .join(Performances, JoinType.INNER, PendingNotifications.performanceId, Performances.id)
+            .join(Theatres, JoinType.INNER, Performances.theatreId, Theatres.id)
+            .selectAll()
+            .where {
+                (PendingNotifications.sentAt.isNull()) and
+                (PendingNotifications.performanceId eq performanceId)
+            }
+            .map { row ->
+                PendingNotificationResponse(
+                    id = row[PendingNotifications.id].toString(),
+                    telegramId = row[Users.telegramId],
+                    performanceTitle = row[Performances.title],
+                    performanceUrl = row[Performances.url],
+                    theatreSlug = row[Theatres.slug],
+                    scheduleSummary = row[PendingNotifications.scheduleSummary],
+                    createdAt = row[PendingNotifications.createdAt].toString()
+                )
+            }
+    }
+
     suspend fun getPendingForTheatre(theatreSlug: String): List<PendingNotificationResponse> = dbQuery(database) {
         PendingNotifications
             .join(Users, JoinType.INNER, PendingNotifications.userId, Users.id)

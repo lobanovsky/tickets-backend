@@ -3,7 +3,7 @@ val kotlin_version: String by project
 val logback_version: String by project
 val postgres_version: String by project
 val jsoup_version: String by project
-val selenium_version: String by project
+val playwright_version: String by project
 
 plugins {
     kotlin("jvm") version "2.3.0"
@@ -40,7 +40,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio")
     implementation("io.ktor:ktor-client-content-negotiation")
     implementation("org.jsoup:jsoup:$jsoup_version")
-    implementation("org.seleniumhq.selenium:selenium-chrome-driver:$selenium_version")
+    implementation("com.microsoft.playwright:playwright:$playwright_version")
     implementation("ch.qos.logback:logback-classic:$logback_version")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")

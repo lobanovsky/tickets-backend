@@ -3,7 +3,7 @@ package ru.tickets.security
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 
-data class BotPrincipal(val slug: String, val isAdmin: Boolean) : Principal
+data class BotPrincipal(val slug: String, val isAdmin: Boolean)
 
 fun Application.configureSecurity() {
     val keys: Map<String, BotPrincipal> = mapOf(
