@@ -11,6 +11,7 @@ fun Application.configureSecurity() {
         environment.config.property("api-keys.nations").getString() to BotPrincipal("nations", false),
         environment.config.property("api-keys.vakhtangov").getString() to BotPrincipal("vakhtangov", false),
         environment.config.property("api-keys.fomenki").getString() to BotPrincipal("fomenki", false),
+        environment.config.property("api-keys.lensov").getString() to BotPrincipal("lensov", false),
         environment.config.property("api-keys.admin").getString() to BotPrincipal("admin", true),
     )
 
