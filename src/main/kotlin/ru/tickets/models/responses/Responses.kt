@@ -11,7 +11,8 @@ data class UserResponse(
     val username: String?,
     val isActive: Boolean,
     val isVip: Boolean,
-    val createdAt: String
+    val createdAt: String,
+    val hasPaidSubscription: Boolean
 )
 
 @Serializable

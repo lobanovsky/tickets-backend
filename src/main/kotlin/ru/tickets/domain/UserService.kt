@@ -1,11 +1,13 @@
 package ru.tickets.domain
 
+import java.time.LocalDate
 import java.time.LocalDateTime
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
+import ru.tickets.db.schema.PaidSubscriptions
 import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Users
 import ru.tickets.models.NotFoundException
@@ -32,6 +34,17 @@ class UserService(private val database: Database) {
 
             null -> Users.selectAll()
         }
+        val today = LocalDate.now()
+        val paidUserIds = PaidSubscriptions
+            .select(PaidSubscriptions.userId)
+            .where {
+                (PaidSubscriptions.isActive eq true) and
+                (PaidSubscriptions.startDate lessEq today) and
+                (PaidSubscriptions.endDate greaterEq today)
+            }
+            .map { it[PaidSubscriptions.userId] }
+            .toSet()
+
         query.orderBy(Users.createdAt, SortOrder.DESC).map { row ->
             UserResponse(
                 id = row[Users.id].toString(),
@@ -41,7 +54,8 @@ class UserService(private val database: Database) {
                 username = row[Users.username],
                 isActive = row[Users.isActive],
                 isVip = row[Users.isVip],
-                createdAt = row[Users.createdAt].toString()
+                createdAt = row[Users.createdAt].toString(),
+                hasPaidSubscription = row[Users.id] in paidUserIds
             )
         }
     }
@@ -66,7 +80,8 @@ class UserService(private val database: Database) {
                 username = req.username,
                 isActive = true,
                 isVip = false,
-                createdAt = LocalDateTime.now().toString()
+                createdAt = LocalDateTime.now().toString(),
+                hasPaidSubscription = false
             )
         } else {
             Users.update({ Users.telegramId eq req.telegramId }) {
@@ -83,7 +98,8 @@ class UserService(private val database: Database) {
                 username = req.username,
                 isActive = true,
                 isVip = existing[Users.isVip],
-                createdAt = existing[Users.createdAt].toString()
+                createdAt = existing[Users.createdAt].toString(),
+                hasPaidSubscription = false
             )
         }
     }
