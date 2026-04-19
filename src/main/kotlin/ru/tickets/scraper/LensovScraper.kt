@@ -41,7 +41,12 @@ class LensovScraper : BaseWebScraper() {
             for (li in items) {
                 val dateText = li.selectFirst("div")?.text()?.trim() ?: continue
                 val ticketsAvailable = li.select("div.wb-button:not(.waitlist)").isNotEmpty()
+                val actionClasses = li.select("a, button, div").eachAttr("class").filter { it.isNotBlank() }.distinct()
+                val slotHtml = li.html()
+                    .replace(Regex("\\s+"), " ")
+                    .take(600)
                 log.info("[lensov] Слот: date=\"$dateText\", ticketsAvailable=$ticketsAvailable, url=$performanceUrl")
+                log.info("[lensov] Слот debug: classes=$actionClasses, html=$slotHtml")
                 schedules.add(ScrapedSchedule(date = dateText, time = "", ticketsAvailable = ticketsAvailable))
             }
             if (schedules.isEmpty()) log.warn("[lensov] Расписание не найдено для $performanceUrl")
