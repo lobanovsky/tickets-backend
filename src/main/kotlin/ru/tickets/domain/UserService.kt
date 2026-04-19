@@ -17,11 +17,17 @@ class UserService(private val database: Database) {
     suspend fun findAll(hasSubscriptions: Boolean? = null): List<UserResponse> = dbQuery(database) {
         val query = when (hasSubscriptions) {
             true -> Users.selectAll().where {
-                Users.id inSubQuery Subscriptions.select(Subscriptions.userId).withDistinct()
+                Users.id inSubQuery Subscriptions
+                    .select(Subscriptions.userId)
+                    .where { Subscriptions.isActive eq true }
+                    .withDistinct()
             }
 
             false -> Users.selectAll().where {
-                Users.id notInSubQuery Subscriptions.select(Subscriptions.userId).withDistinct()
+                Users.id notInSubQuery Subscriptions
+                    .select(Subscriptions.userId)
+                    .where { Subscriptions.isActive eq true }
+                    .withDistinct()
             }
 
             null -> Users.selectAll()
