@@ -1,6 +1,8 @@
 package ru.tickets.domain
 
+import java.time.LocalDateTime
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
@@ -24,7 +26,7 @@ class UserService(private val database: Database) {
 
             null -> Users.selectAll()
         }
-        query.map { row ->
+        query.orderBy(Users.createdAt, SortOrder.DESC).map { row ->
             UserResponse(
                 id = row[Users.id].toString(),
                 telegramId = row[Users.telegramId],
@@ -32,7 +34,8 @@ class UserService(private val database: Database) {
                 lastName = row[Users.lastName],
                 username = row[Users.username],
                 isActive = row[Users.isActive],
-                isVip = row[Users.isVip]
+                isVip = row[Users.isVip],
+                createdAt = row[Users.createdAt].toString()
             )
         }
     }
@@ -56,7 +59,8 @@ class UserService(private val database: Database) {
                 lastName = req.lastName,
                 username = req.username,
                 isActive = true,
-                isVip = false
+                isVip = false,
+                createdAt = LocalDateTime.now().toString()
             )
         } else {
             Users.update({ Users.telegramId eq req.telegramId }) {
@@ -72,7 +76,8 @@ class UserService(private val database: Database) {
                 lastName = req.lastName,
                 username = req.username,
                 isActive = true,
-                isVip = existing[Users.isVip]
+                isVip = existing[Users.isVip],
+                createdAt = existing[Users.createdAt].toString()
             )
         }
     }
