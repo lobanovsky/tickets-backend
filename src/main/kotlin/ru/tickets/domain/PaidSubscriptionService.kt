@@ -1,7 +1,10 @@
 package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
@@ -88,6 +91,14 @@ class PaidSubscriptionService(private val database: Database) {
             hasActiveSubscription = active != null,
             subscription = active?.toPaidSubscriptionResponse()
         )
+    }
+
+    suspend fun deactivateExpired(): Int = dbQuery(database) {
+        PaidSubscriptions.update({
+            (PaidSubscriptions.isActive eq true) and (PaidSubscriptions.endDate less LocalDate.now())
+        }) {
+            it[isActive] = false
+        }
     }
 
     private fun org.jetbrains.exposed.sql.ResultRow.toPaidSubscriptionResponse() = PaidSubscriptionResponse(
