@@ -55,16 +55,22 @@ class ScraperService(
                 // Step 2: Check tickets for performances with active subscribers
                 val semaphore = Semaphore(2)
                 val performances = performanceService.findWithActiveSubscribers(theatreId)
+                log.info("[${scraper.theatreSlug}] Активных спектаклей с подписчиками: ${performances.size}")
 
                 coroutineScope {
                     performances.map { perf ->
                         async {
                             semaphore.withPermit {
                                 try {
+                                    log.info("[${scraper.theatreSlug}] Проверка спектакля: ${perf.title} (${perf.url})")
                                     val schedule = withContext(Dispatchers.IO) {
                                         scraper.scrapeSchedule(perf.url)
                                     }
                                     val available = schedule.filter { it.ticketsAvailable }
+                                    log.info(
+                                        "[${scraper.theatreSlug}] Результат проверки: ${perf.title}, " +
+                                        "слотов=${schedule.size}, доступных=${available.size}"
+                                    )
                                     if (available.isNotEmpty()) {
                                         val summary = available.joinToString("\n") { s ->
                                             buildString {
@@ -82,6 +88,8 @@ class ScraperService(
                                                 log.info("[${scraper.theatreSlug}] Вебхук отправлен: telegramId=${notif.telegramId}")
                                             }
                                         }
+                                    } else {
+                                        log.info("[${scraper.theatreSlug}] Билеты не найдены: ${perf.title}")
                                     }
                                 } catch (e: Exception) {
                                     log.error("[${scraper.theatreSlug}] Ошибка скрапинга ${perf.url}: ${e.message}")

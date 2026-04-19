@@ -36,9 +36,12 @@ class LensovScraper : BaseWebScraper() {
         try {
             val html = fetchHtmlWithSelenium(performanceUrl) ?: return schedules
             val doc = Jsoup.parse(html)
-            for (li in doc.select(".restaurantBookTable .colorbox-items li")) {
+            val items = doc.select(".restaurantBookTable .colorbox-items li")
+            log.info("[lensov] Найдено DOM-слотов расписания: ${items.size} для $performanceUrl")
+            for (li in items) {
                 val dateText = li.selectFirst("div")?.text()?.trim() ?: continue
                 val ticketsAvailable = li.select("div.wb-button:not(.waitlist)").isNotEmpty()
+                log.info("[lensov] Слот: date=\"$dateText\", ticketsAvailable=$ticketsAvailable, url=$performanceUrl")
                 schedules.add(ScrapedSchedule(date = dateText, time = "", ticketsAvailable = ticketsAvailable))
             }
             if (schedules.isEmpty()) log.warn("[lensov] Расписание не найдено для $performanceUrl")
