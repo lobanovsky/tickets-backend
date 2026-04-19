@@ -40,7 +40,17 @@ class LensovScraper : BaseWebScraper() {
             log.info("[lensov] Найдено DOM-слотов расписания: ${items.size} для $performanceUrl")
             for (li in items) {
                 val dateText = li.selectFirst("div")?.text()?.trim() ?: continue
-                val ticketsAvailable = li.select("div.wb-button:not(.waitlist)").isNotEmpty()
+                val actionNodes = li.select(".wb-button-root, .wb-button, a, button, div")
+                val ticketsAvailable = actionNodes.any { node ->
+                    val classes = node.classNames()
+                    val text = node.text().trim()
+                    !classes.contains("waitlist") &&
+                        (
+                            text.contains("Купить билет", ignoreCase = true) ||
+                                text.contains("Купить", ignoreCase = true) ||
+                                (classes.contains("button-primary") && text.isNotBlank())
+                            )
+                }
                 val actionClasses = li.select("a, button, div").eachAttr("class").filter { it.isNotBlank() }.distinct()
                 val slotHtml = li.html()
                     .replace(Regex("\\s+"), " ")
