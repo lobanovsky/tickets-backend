@@ -23,10 +23,14 @@ bot-webhooks:
   fomenki:
     url: ${BOT_WEBHOOK_URL_FOMENKI:}
     secret: ${BOT_WEBHOOK_SECRET_FOMENKI:}
+  lensov:
+    url: ${BOT_WEBHOOK_URL_LENSOV:}
+    secret: ${BOT_WEBHOOK_SECRET_LENSOV:}
 
 api-keys:
   ramt: ${RAMT_API_KEY:ramt-secret}
   nations: ${NATIONS_API_KEY:nations-secret}
   vakhtangov: ${VAKHTANGOV_API_KEY:vakhtangov-secret}
   fomenki: ${FOMENKI_API_KEY:fomenki-secret}
+  lensov: ${LENSOV_API_KEY:lensov-secret}
   admin: ${ADMIN_API_KEY:admin-secret}

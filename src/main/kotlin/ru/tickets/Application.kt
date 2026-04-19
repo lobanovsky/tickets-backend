@@ -29,7 +29,7 @@ fun Application.startScrapers() {
     val performanceService = PerformanceService(database)
     val notificationService = NotificationService(database)
 
-    val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki").associateWith { slug ->
+    val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").associateWith { slug ->
         BotWebhookConfig(
             url = environment.config.propertyOrNull("bot-webhooks.$slug.url")?.getString() ?: "",
             secret = environment.config.propertyOrNull("bot-webhooks.$slug.secret")?.getString() ?: ""
@@ -42,7 +42,8 @@ fun Application.startScrapers() {
         RamtScraper(),
         NationsScraper(),
         VakhtangovScraper(),
-        FomenkiScraper()
+        FomenkiScraper(),
+        LensovScraper()
     )
     // Оркестратор: запускает все скраперы по расписанию, сохраняет спектакли и рассылает уведомления
     val scraperService = ScraperService(performanceService, notificationService, webhookClient, scrapers)
