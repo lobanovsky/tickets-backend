@@ -35,12 +35,11 @@ class UserService(private val database: Database) {
             null -> Users.selectAll()
         }
         val today = LocalDate.now()
-        val paidUserIds = PaidSubscriptions
-            .select(PaidSubscriptions.userId)
-            .where {
-                (PaidSubscriptions.isActive eq true) and
-                (PaidSubscriptions.startDate lessEq today) and
-                (PaidSubscriptions.endDate greaterEq today)
+        val paidUserIds = PaidSubscriptions.selectAll()
+            .where { PaidSubscriptions.isActive eq true }
+            .filter {
+                !it[PaidSubscriptions.startDate].isAfter(today) &&
+                !it[PaidSubscriptions.endDate].isBefore(today)
             }
             .map { it[PaidSubscriptions.userId] }
             .toSet()
