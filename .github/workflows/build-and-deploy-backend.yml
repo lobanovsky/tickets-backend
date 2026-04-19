@@ -64,6 +64,7 @@ jobs:
           echo "VAKHTANGOV_API_KEY=${{ secrets.VAKHTANGOV_API_KEY }}" >> .env
           echo "FOMENKI_API_KEY=${{ secrets.FOMENKI_API_KEY }}" >> .env
           echo "NATIONS_API_KEY=${{ secrets.NATIONS_API_KEY }}" >> .env
+          echo "LENSOV_API_KEY=${{ secrets.LENSOV_API_KEY }}" >> .env          
           echo "RAMT_API_KEY=${{ secrets.RAMT_API_KEY }}" >> .env          
           echo "BOT_WEBHOOK_URL_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_URL_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_SECRET_VAKHTANGOV }}" >> .env
@@ -72,7 +73,9 @@ jobs:
           echo "BOT_WEBHOOK_URL_NATIONS=${{ secrets.BOT_WEBHOOK_URL_NATIONS }}" >> .env
           echo "BOT_WEBHOOK_SECRET_NATIONS=${{ secrets.BOT_WEBHOOK_SECRET_NATIONS }}" >> .env
           echo "BOT_WEBHOOK_URL_RAMT=${{ secrets.BOT_WEBHOOK_URL_RAMT }}" >> .env
-          echo "BOT_WEBHOOK_SECRET_RAMT=${{ secrets.BOT_WEBHOOK_SECRET_RAMT }}" >> .env
+          echo "BOT_WEBHOOK_SECRET_RAMT=${{ secrets.BOT_WEBHOOK_SECRET_RAMT }}" >> .env        
+          echo "BOT_WEBHOOK_URL_LENSOV=${{ secrets.BOT_WEBHOOK_URL_LENSOV }}" >> .env
+          echo "BOT_WEBHOOK_SECRET_LENSOV=${{ secrets.BOT_WEBHOOK_SECRET_LENSOV }}" >> .env
 
       - name: copy files to host
         uses: appleboy/scp-action@v0.1.7

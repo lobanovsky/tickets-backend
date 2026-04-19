@@ -345,24 +345,27 @@ Authorization: Bearer <api-key>
 
 ## Переменные окружения
 
-| Переменная | По умолчанию | Описание |
-|---|---|---|
-| `DB_URL` | `jdbc:postgresql://localhost:5455/tickets` | JDBC URL базы данных |
-| `DB_USER` | `tickets` | Пользователь БД |
-| `DB_PASSWORD` | `tickets` | Пароль БД |
-| `RAMT_API_KEY` | `ramt-secret` | API-ключ для бота РАМТ |
-| `NATIONS_API_KEY` | `nations-secret` | API-ключ для бота Театра Наций |
-| `VAKHTANGOV_API_KEY` | `vakhtangov-secret` | API-ключ для бота Вахтангова |
-| `FOMENKI_API_KEY` | `fomenki-secret` | API-ключ для бота Фоменко |
-| `ADMIN_API_KEY` | `admin-secret` | Мастер API-ключ |
-| `BOT_WEBHOOK_URL_RAMT` | — | URL вебхука бота РАМТ |
-| `BOT_WEBHOOK_SECRET_RAMT` | — | Секрет вебхука бота РАМТ |
-| `BOT_WEBHOOK_URL_NATIONS` | — | URL вебхука бота Театра Наций |
-| `BOT_WEBHOOK_SECRET_NATIONS` | — | Секрет вебхука бота Театра Наций |
-| `BOT_WEBHOOK_URL_VAKHTANGOV` | — | URL вебхука бота Вахтангова |
-| `BOT_WEBHOOK_SECRET_VAKHTANGOV` | — | Секрет вебхука бота Вахтангова |
-| `BOT_WEBHOOK_URL_FOMENKI` | — | URL вебхука бота Фоменко |
-| `BOT_WEBHOOK_SECRET_FOMENKI` | — | Секрет вебхука бота Фоменко |
+| Переменная                      | По умолчанию                               | Описание                         |
+|---------------------------------|--------------------------------------------|----------------------------------|
+| `DB_URL`                        | `jdbc:postgresql://localhost:5455/tickets` | JDBC URL базы данных             |
+| `DB_USER`                       | `tickets`                                  | Пользователь БД                  |
+| `DB_PASSWORD`                   | `tickets`                                  | Пароль БД                        |
+| `RAMT_API_KEY`                  | `ramt-secret`                              | API-ключ для бота РАМТ           |
+| `NATIONS_API_KEY`               | `nations-secret`                           | API-ключ для бота Театра Наций   |
+| `VAKHTANGOV_API_KEY`            | `vakhtangov-secret`                        | API-ключ для бота Вахтангова     |
+| `FOMENKI_API_KEY`               | `fomenki-secret`                           | API-ключ для бота Фоменко        |
+| `LENSOV_API_KEY`                | `lensov-secret`                            | API-ключ для бота Ленсовет       |
+| `ADMIN_API_KEY`                 | `admin-secret`                             | Мастер API-ключ                  |
+| `BOT_WEBHOOK_URL_RAMT`          | —                                          | URL вебхука бота РАМТ            |
+| `BOT_WEBHOOK_SECRET_RAMT`       | —                                          | Секрет вебхука бота РАМТ         |
+| `BOT_WEBHOOK_URL_NATIONS`       | —                                          | URL вебхука бота Театра Наций    |
+| `BOT_WEBHOOK_SECRET_NATIONS`    | —                                          | Секрет вебхука бота Театра Наций |
+| `BOT_WEBHOOK_URL_VAKHTANGOV`    | —                                          | URL вебхука бота Вахтангова      |
+| `BOT_WEBHOOK_SECRET_VAKHTANGOV` | —                                          | Секрет вебхука бота Вахтангова   |
+| `BOT_WEBHOOK_URL_FOMENKI`       | —                                          | URL вебхука бота Фоменко         |
+| `BOT_WEBHOOK_SECRET_FOMENKI`    | —                                          | Секрет вебхука бота Фоменко      |
+| `BOT_WEBHOOK_URL_LENSOV`        | —                                          | Секрет вебхука бота Ленсовет     |
+| `BOT_WEBHOOK_SECRET_LENSOV`     | —                                          | Секрет вебхука бота Ленсовет     |
 
 ## Поток интеграции бота
 
