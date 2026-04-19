@@ -2,11 +2,13 @@ package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import ru.tickets.db.schema.PaidSubscriptions
 import ru.tickets.db.schema.PendingNotifications
 import ru.tickets.db.schema.Performances
 import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Theatres
 import ru.tickets.db.schema.Users
+import java.time.LocalDate
 import ru.tickets.models.NotFoundException
 import ru.tickets.models.responses.PendingNotificationResponse
 import java.time.LocalDateTime
@@ -23,10 +25,20 @@ class NotificationService(private val database: Database) {
                 .where { Performances.id eq performanceId }
                 .singleOrNull() ?: return@transaction
 
+            val today = LocalDate.now()
             val subscribers = Subscriptions
                 .join(Users, JoinType.INNER, Subscriptions.userId, Users.id)
                 .selectAll()
-                .where { (Subscriptions.performanceId eq performanceId) and (Subscriptions.isActive eq true) }
+                .where {
+                    (Subscriptions.performanceId eq performanceId) and
+                    (Subscriptions.isActive eq true) and
+                    (Subscriptions.userId inSubQuery PaidSubscriptions
+                        .select(PaidSubscriptions.userId)
+                        .where {
+                            (PaidSubscriptions.isActive eq true) and
+                            (PaidSubscriptions.endDate greaterEq today)
+                        })
+                }
 
             for (row in subscribers) {
                 val userId = row[Subscriptions.userId]

@@ -91,6 +91,24 @@ data class TheatreStats(
 )
 
 @Serializable
+data class PaidSubscriptionResponse(
+    val id: String,
+    val startDate: String,
+    val endDate: String,
+    val amountPaid: Int,
+    val comment: String?,
+    val isActive: Boolean,
+    val createdBy: String,
+    val createdAt: String
+)
+
+@Serializable
+data class PaidSubscriptionStatusResponse(
+    val hasActiveSubscription: Boolean,
+    val subscription: PaidSubscriptionResponse?
+)
+
+@Serializable
 data class StatsResponse(
     val totalUsers: Long,
     val activeUsers: Long,

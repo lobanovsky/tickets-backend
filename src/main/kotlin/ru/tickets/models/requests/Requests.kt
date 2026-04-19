@@ -21,3 +21,18 @@ data class UnsubscribeRequest(
     val telegramId: Long,
     val performanceId: String
 )
+
+@Serializable
+data class CreatePaidSubscriptionRequest(
+    val startDate: String,
+    val endDate: String,
+    val amountPaid: Int,
+    val comment: String? = null
+)
+
+@Serializable
+data class UpdatePaidSubscriptionRequest(
+    val isActive: Boolean? = null,
+    val endDate: String? = null,
+    val comment: String? = null
+)

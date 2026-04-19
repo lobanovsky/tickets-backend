@@ -18,12 +18,14 @@ fun Application.configureRouting() {
     val userService = UserService(database)
     val subscriptionService = SubscriptionService(database)
     val notificationService = NotificationService(database)
+    val paidSubscriptionService = PaidSubscriptionService(database)
 
     install(CORS) {
         anyHost()
         allowHeader(HttpHeaders.ContentType)
         allowHeader(HttpHeaders.Authorization)
         allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Patch)
     }
 
     install(StatusPages) {
@@ -56,6 +58,7 @@ fun Application.configureRouting() {
             subscriptionRoutes(subscriptionService)
             notificationRoutes(notificationService)
             adminRoutes(subscriptionService, theatreService)
+            paidSubscriptionRoutes(paidSubscriptionService)
         }
     }
 }
