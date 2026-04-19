@@ -65,7 +65,8 @@ Authorization: Bearer <api-key>
   "firstName": "Иван",
   "lastName": "Иванов",
   "username": "ivan",
-  "isActive": true
+  "isActive": true,
+  "isVip": false
 }
 ```
 
@@ -262,6 +263,20 @@ Authorization: Bearer <api-key>
 
 ---
 
+#### `POST /admin/users/{telegramId}/vip`
+Присвоить пользователю статус VIP. Только admin-ключ.
+
+**Ответ `200`** (пустое тело).
+
+---
+
+#### `DELETE /admin/users/{telegramId}/vip`
+Снять статус VIP с пользователя. Только admin-ключ.
+
+**Ответ `200`** (пустое тело).
+
+---
+
 #### `GET /admin/users`
 Список всех пользователей. Только admin-ключ.
 
@@ -278,7 +293,8 @@ Authorization: Bearer <api-key>
     "firstName": "Иван",
     "lastName": "Иванов",
     "username": "ivan",
-    "isActive": true
+    "isActive": true,
+    "isVip": false
   }
 ]
 ```

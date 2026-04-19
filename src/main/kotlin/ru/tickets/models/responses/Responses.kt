@@ -9,7 +9,8 @@ data class UserResponse(
     val firstName: String,
     val lastName: String?,
     val username: String?,
-    val isActive: Boolean
+    val isActive: Boolean,
+    val isVip: Boolean
 )
 
 @Serializable

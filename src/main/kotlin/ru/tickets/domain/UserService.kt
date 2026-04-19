@@ -6,6 +6,7 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Users
+import ru.tickets.models.NotFoundException
 import ru.tickets.models.requests.SyncUserRequest
 import ru.tickets.models.responses.UserResponse
 
@@ -30,7 +31,8 @@ class UserService(private val database: Database) {
                 firstName = row[Users.firstName],
                 lastName = row[Users.lastName],
                 username = row[Users.username],
-                isActive = row[Users.isActive]
+                isActive = row[Users.isActive],
+                isVip = row[Users.isVip]
             )
         }
     }
@@ -53,7 +55,8 @@ class UserService(private val database: Database) {
                 firstName = req.firstName,
                 lastName = req.lastName,
                 username = req.username,
-                isActive = true
+                isActive = true,
+                isVip = false
             )
         } else {
             Users.update({ Users.telegramId eq req.telegramId }) {
@@ -68,8 +71,16 @@ class UserService(private val database: Database) {
                 firstName = req.firstName,
                 lastName = req.lastName,
                 username = req.username,
-                isActive = true
+                isActive = true,
+                isVip = existing[Users.isVip]
             )
         }
+    }
+
+    suspend fun setVip(telegramId: Long, isVip: Boolean) = dbQuery(database) {
+        val updated = Users.update({ Users.telegramId eq telegramId }) {
+            it[Users.isVip] = isVip
+        }
+        if (updated == 0) throw NotFoundException("User not found")
     }
 }

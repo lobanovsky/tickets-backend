@@ -25,6 +25,24 @@ fun Route.userRoutes(userService: UserService, subscriptionService: Subscription
             call.respond(subscriptionService.getUserSubscriptions(telegramId, theatre))
         }
 
+        post("/admin/users/{telegramId}/vip") {
+            val principal = call.principal<BotPrincipal>()!!
+            if (!principal.isAdmin) return@post call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", "Forbidden"))
+            val telegramId = call.parameters["telegramId"]?.toLongOrNull()
+                ?: return@post call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", "Invalid telegramId"))
+            userService.setVip(telegramId, true)
+            call.respond(HttpStatusCode.OK)
+        }
+
+        delete("/admin/users/{telegramId}/vip") {
+            val principal = call.principal<BotPrincipal>()!!
+            if (!principal.isAdmin) return@delete call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", "Forbidden"))
+            val telegramId = call.parameters["telegramId"]?.toLongOrNull()
+                ?: return@delete call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", "Invalid telegramId"))
+            userService.setVip(telegramId, false)
+            call.respond(HttpStatusCode.OK)
+        }
+
         get("/admin/users") {
             val principal = call.principal<BotPrincipal>()!!
             if (!principal.isAdmin) return@get call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", "Forbidden"))

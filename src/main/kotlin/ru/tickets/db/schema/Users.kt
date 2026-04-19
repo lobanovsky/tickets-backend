@@ -11,6 +11,7 @@ object Users : Table("users") {
     val lastName = varchar("last_name", 100).nullable()
     val username = varchar("username", 100).nullable()
     val isActive = bool("is_active").default(true)
+    val isVip = bool("is_vip").default(false)
     val createdAt = datetime("created_at").defaultExpression(CurrentDateTime)
 
     override val primaryKey = PrimaryKey(id)
