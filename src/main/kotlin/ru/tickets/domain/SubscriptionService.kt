@@ -63,7 +63,7 @@ class SubscriptionService(private val database: Database) {
         log.info("Отписка: $userName (telegramId=$telegramId), спектакль=\"$performanceTitle\" ($performanceId)")
     }
 
-    suspend fun getUserSubscriptions(telegramId: Long): List<SubscriptionsByTheatreResponse> = dbQuery(database) {
+    suspend fun getUserSubscriptions(telegramId: Long, theatreSlug: String? = null): List<SubscriptionsByTheatreResponse> = dbQuery(database) {
         val userRow = Users.selectAll().where { Users.telegramId eq telegramId }.singleOrNull()
             ?: return@dbQuery emptyList()
         val userId = userRow[Users.id]
@@ -72,7 +72,11 @@ class SubscriptionService(private val database: Database) {
             .join(Performances, JoinType.INNER, Subscriptions.performanceId, Performances.id)
             .join(Theatres, JoinType.INNER, Performances.theatreId, Theatres.id)
             .selectAll()
-            .where { (Subscriptions.userId eq userId) and (Subscriptions.isActive eq true) }
+            .where {
+                (Subscriptions.userId eq userId) and
+                (Subscriptions.isActive eq true) and
+                (if (theatreSlug != null) Theatres.slug eq theatreSlug else Op.TRUE)
+            }
             .map { row ->
                 SubscriptionResponse(
                     id = row[Subscriptions.id].toString(),

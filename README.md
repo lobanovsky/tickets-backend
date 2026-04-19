@@ -71,8 +71,10 @@ Authorization: Bearer <api-key>
 
 ---
 
-#### `GET /users/{telegramId}/subscriptions`
+#### `GET /users/{telegramId}/subscriptions?theatre={slug}`
 Список активных подписок пользователя, сгруппированных по театрам. Используется для команды `/mysubs`.
+
+Параметр `theatre` необязателен — если передан, возвращает подписки только для указанного театра (`ramt`, `nations`, `vakhtangov`, `fomenki`).
 
 **Ответ `200`:**
 ```json

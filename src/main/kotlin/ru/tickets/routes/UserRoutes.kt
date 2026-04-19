@@ -21,7 +21,8 @@ fun Route.userRoutes(userService: UserService, subscriptionService: Subscription
         get("/users/{telegramId}/subscriptions") {
             val telegramId = call.parameters["telegramId"]?.toLongOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid telegramId"))
-            call.respond(subscriptionService.getUserSubscriptions(telegramId))
+            val theatre = call.request.queryParameters["theatre"]
+            call.respond(subscriptionService.getUserSubscriptions(telegramId, theatre))
         }
 
         get("/admin/users") {
