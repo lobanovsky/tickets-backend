@@ -71,6 +71,16 @@ class UserService(private val database: Database) {
                 it[isActive] = true
             }[Users.id]
 
+            val today = LocalDate.now()
+            PaidSubscriptions.insert {
+                it[userId] = id
+                it[startDate] = today
+                it[endDate] = today.plusDays(7)
+                it[amountPaid] = 0
+                it[comment] = "Пробный период"
+                it[createdBy] = "system"
+            }
+
             UserResponse(
                 id = id.toString(),
                 telegramId = req.telegramId,
@@ -80,7 +90,7 @@ class UserService(private val database: Database) {
                 isActive = true,
                 isVip = false,
                 createdAt = LocalDateTime.now().toString(),
-                hasPaidSubscription = false
+                hasPaidSubscription = true
             )
         } else {
             Users.update({ Users.telegramId eq req.telegramId }) {
