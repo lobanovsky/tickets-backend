@@ -5,6 +5,10 @@ import org.slf4j.LoggerFactory
 import ru.tickets.domain.ScrapedPerformance
 
 class LensovScraper : BaseWebScraper() {
+    private companion object {
+        val AVAILABLE_ACTIONS = setOf("Купить билет")
+        val UNAVAILABLE_ACTIONS = setOf("Оставить заявку", "Билеты проданы", "Белеты проданы")
+    }
 
     override val theatreSlug = "lensov"
     private val log = LoggerFactory.getLogger(LensovScraper::class.java)
@@ -47,11 +51,11 @@ class LensovScraper : BaseWebScraper() {
         val doc = Jsoup.parse(html)
         return doc.select(".restaurantBookTable .colorbox-items li").mapNotNull { li ->
             val dateText = li.selectFirst("div")?.text()?.trim() ?: return@mapNotNull null
-            val ticketsAvailable = li.select(".wb-button-root, .wb-button").any { node ->
-                val text = node.text().trim()
-                val classes = node.classNames()
-                text.equals("Купить билет", ignoreCase = true) && !classes.contains("waitlist")
+            val actionLabels = li.select(".wb-button-root, .wb-button").map { node ->
+                node.text().replace(Regex("\\s+"), " ").trim()
             }
+            val ticketsAvailable = actionLabels.any { it in AVAILABLE_ACTIONS } &&
+                actionLabels.none { it in UNAVAILABLE_ACTIONS }
             ScrapedSchedule(date = dateText, time = "", ticketsAvailable = ticketsAvailable)
         }
     }
