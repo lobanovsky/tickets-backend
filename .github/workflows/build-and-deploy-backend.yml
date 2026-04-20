@@ -65,7 +65,12 @@ jobs:
           echo "FOMENKI_API_KEY=${{ secrets.FOMENKI_API_KEY }}" >> .env
           echo "NATIONS_API_KEY=${{ secrets.NATIONS_API_KEY }}" >> .env
           echo "LENSOV_API_KEY=${{ secrets.LENSOV_API_KEY }}" >> .env          
-          echo "RAMT_API_KEY=${{ secrets.RAMT_API_KEY }}" >> .env          
+          echo "RAMT_API_KEY=${{ secrets.RAMT_API_KEY }}" >> .env
+          echo "BOT_TOKEN_VAKHTANGOV=${{ secrets.BOT_TOKEN_VAKHTANGOV }}" >> .env
+          echo "BOT_TOKEN_RAMT=${{ secrets.BOT_TOKEN_RAMT }}" >> .env
+          echo "BOT_TOKEN_NATIONS=${{ secrets.BOT_TOKEN_NATIONS }}" >> .env
+          echo "BOT_TOKEN_FOMENKI=${{ secrets.BOT_TOKEN_FOMENKI }}" >> .env
+          echo "BOT_TOKEN_LENSOV=${{ secrets.BOT_TOKEN_LENSOV }}" >> .env
           echo "BOT_WEBHOOK_URL_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_URL_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_SECRET_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_URL_FOMENKI=${{ secrets.BOT_WEBHOOK_URL_FOMENKI }}" >> .env

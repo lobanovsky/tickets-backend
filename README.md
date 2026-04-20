@@ -325,6 +325,53 @@ Authorization: Bearer <api-key>
 
 ---
 
+---
+
+### Рассылка сообщений
+
+Бэкенд отправляет сообщения напрямую через Telegram Bot API (`sendMessage`). При первой отправке делается fan-out по всем ботам; результат (успех / заблокирован пользователем) сохраняется в таблице `user_bot_links` и учитывается при следующих отправках.
+
+Все три эндпоинта — только admin-ключ (или ключ своего театра для `/send/bot/{slug}`).
+
+**Тело запроса:**
+```json
+{
+  "text": "Ваша подписка истекает завтра",
+  "parseMode": "HTML"
+}
+```
+`parseMode` необязателен (`HTML` или `MarkdownV2`).
+
+**Ответ:**
+```json
+{
+  "total": 3,
+  "succeeded": 2,
+  "results": [
+    { "botSlug": "ramt",      "telegramId": 123, "success": true  },
+    { "botSlug": "nations",   "telegramId": 123, "success": false, "error": "Forbidden: bot was blocked by the user" },
+    { "botSlug": "vakhtangov","telegramId": 123, "success": true  }
+  ]
+}
+```
+
+#### `POST /admin/messages/send/user/{telegramId}`
+Отправить сообщение конкретному пользователю. Пробует все боты, на которые подписан пользователь (или все, если подписки ещё не определены).
+
+Параметр `?botSlug=ramt` — отправить только через конкретный бот.
+
+---
+
+#### `POST /admin/messages/send/bot/{slug}`
+Отправить сообщение всем пользователям, подписанным на бота `{slug}`. Пропускает тех, кто явно заблокировал бота.
+
+---
+
+#### `POST /admin/messages/send/all`
+Отправить сообщение всем пользователям через все боты. Только admin-ключ.
+
+---
+
 ## Коды ошибок
 
 Все ошибки возвращаются в формате:
@@ -366,6 +413,11 @@ Authorization: Bearer <api-key>
 | `BOT_WEBHOOK_SECRET_FOMENKI`    | —                                          | Секрет вебхука бота Фоменко      |
 | `BOT_WEBHOOK_URL_LENSOV`        | —                                          | Секрет вебхука бота Ленсовет     |
 | `BOT_WEBHOOK_SECRET_LENSOV`     | —                                          | Секрет вебхука бота Ленсовет     |
+| `BOT_TOKEN_RAMT`                | —                                          | Токен бота РАМТ (для sendMessage)|
+| `BOT_TOKEN_NATIONS`             | —                                          | Токен бота Театра Наций          |
+| `BOT_TOKEN_VAKHTANGOV`          | —                                          | Токен бота Вахтангова            |
+| `BOT_TOKEN_FOMENKI`             | —                                          | Токен бота Фоменко               |
+| `BOT_TOKEN_LENSOV`              | —                                          | Токен бота Ленсовет              |
 
 ## Поток интеграции бота
 

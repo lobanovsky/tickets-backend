@@ -9,6 +9,7 @@ import io.ktor.server.routing.*
 import ru.tickets.db.DatabaseKey
 import ru.tickets.domain.*
 import ru.tickets.models.*
+import ru.tickets.domain.TelegramSenderService
 
 fun Application.configureRouting() {
     val database = attributes[DatabaseKey]
@@ -19,6 +20,12 @@ fun Application.configureRouting() {
     val subscriptionService = SubscriptionService(database)
     val notificationService = NotificationService(database)
     val paidSubscriptionService = PaidSubscriptionService(database)
+
+    val botTokens = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").mapNotNull { slug ->
+        val token = environment.config.propertyOrNull("bot-tokens.$slug")?.getString()
+        if (!token.isNullOrBlank()) slug to token else null
+    }.toMap()
+    val telegramSenderService = TelegramSenderService(database, botTokens)
 
     install(CORS) {
         anyHost()
@@ -59,6 +66,7 @@ fun Application.configureRouting() {
             notificationRoutes(notificationService)
             adminRoutes(subscriptionService, theatreService)
             paidSubscriptionRoutes(paidSubscriptionService)
+            messageRoutes(telegramSenderService)
         }
     }
 }

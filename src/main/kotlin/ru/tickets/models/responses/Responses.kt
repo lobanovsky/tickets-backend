@@ -110,6 +110,21 @@ data class PaidSubscriptionStatusResponse(
 )
 
 @Serializable
+data class MessageSendResult(
+    val botSlug: String,
+    val telegramId: Long,
+    val success: Boolean,
+    val error: String? = null
+)
+
+@Serializable
+data class MessageSendResponse(
+    val total: Int,
+    val succeeded: Int,
+    val results: List<MessageSendResult>
+)
+
+@Serializable
 data class StatsResponse(
     val totalUsers: Long,
     val activeUsers: Long,

@@ -27,6 +27,13 @@ bot-webhooks:
     url: ${BOT_WEBHOOK_URL_LENSOV:}
     secret: ${BOT_WEBHOOK_SECRET_LENSOV:}
 
+bot-tokens:
+  vakhtangov: ${BOT_TOKEN_VAKHTANGOV:}
+  ramt: ${BOT_TOKEN_RAMT:}
+  nations: ${BOT_TOKEN_NATIONS:}
+  fomenki: ${BOT_TOKEN_FOMENKI:}
+  lensov: ${BOT_TOKEN_LENSOV:}
+
 api-keys:
   ramt: ${RAMT_API_KEY:ramt-secret}
   nations: ${NATIONS_API_KEY:nations-secret}

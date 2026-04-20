@@ -36,3 +36,9 @@ data class UpdatePaidSubscriptionRequest(
     val endDate: String? = null,
     val comment: String? = null
 )
+
+@Serializable
+data class SendMessageRequest(
+    val text: String,
+    val parseMode: String? = null
+)

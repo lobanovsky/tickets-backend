@@ -5,6 +5,7 @@ import io.ktor.util.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.tickets.db.schema.*
+import ru.tickets.db.schema.UserBotLinks
 
 val DatabaseKey = AttributeKey<Database>("TicketsDatabase")
 
@@ -23,7 +24,8 @@ fun Application.configureDatabases() {
 
     transaction(database) {
         arrayOf(Theatres, Performances, Users, Subscriptions, PendingNotifications, PaidSubscriptions)
-        org.jetbrains.exposed.sql.SchemaUtils.create(PaidSubscriptions)
+        org.jetbrains.exposed.sql.SchemaUtils.create(PaidSubscriptions, UserBotLinks)
+        exec("CREATE UNIQUE INDEX IF NOT EXISTS user_bot_links_user_bot_idx ON user_bot_links (user_id, bot_slug)")
         exec("CREATE UNIQUE INDEX IF NOT EXISTS performances_theatre_url_idx ON performances (theatre_id, url)")
         exec("CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_user_perf_idx ON subscriptions (user_id, performance_id)")
         exec("UPDATE performances SET is_active = TRUE WHERE is_active IS NULL")
