@@ -1,14 +1,11 @@
 package ru.tickets.scraper
 
+import com.microsoft.playwright.options.WaitUntilState
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import ru.tickets.domain.ScrapedPerformance
 
 class LensovScraper : BaseWebScraper() {
-    private companion object {
-        val AVAILABLE_ACTIONS = setOf("Купить билет")
-        val UNAVAILABLE_ACTIONS = setOf("Оставить заявку", "Билеты проданы", "Белеты проданы")
-    }
 
     override val theatreSlug = "lensov"
     private val log = LoggerFactory.getLogger(LensovScraper::class.java)
@@ -37,7 +34,7 @@ class LensovScraper : BaseWebScraper() {
 
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
         try {
-            val html = fetchHtmlWithSelenium(performanceUrl) ?: return emptyList()
+            val html = fetchHtmlWithSelenium(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return emptyList()
             val schedules = parseScheduleHtml(html)
             if (schedules.isEmpty()) log.warn("[lensov] Расписание не найдено для $performanceUrl")
             return schedules
@@ -51,11 +48,9 @@ class LensovScraper : BaseWebScraper() {
         val doc = Jsoup.parse(html)
         return doc.select(".restaurantBookTable .colorbox-items li").mapNotNull { li ->
             val dateText = li.selectFirst("div")?.text()?.trim() ?: return@mapNotNull null
-            val actionLabels = li.select(".wb-button-root, .wb-button").map { node ->
-                node.text().replace(Regex("\\s+"), " ").trim()
+            val ticketsAvailable = li.select(".wb-button").any { btn ->
+                !btn.hasClass("waitlist") && !btn.hasClass("no-tickets")
             }
-            val ticketsAvailable = actionLabels.any { it in AVAILABLE_ACTIONS } &&
-                actionLabels.none { it in UNAVAILABLE_ACTIONS }
             ScrapedSchedule(date = dateText, time = "", ticketsAvailable = ticketsAvailable)
         }
     }

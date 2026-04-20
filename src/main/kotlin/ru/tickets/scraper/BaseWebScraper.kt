@@ -7,7 +7,10 @@ import com.microsoft.playwright.options.WaitUntilState
 
 abstract class BaseWebScraper : WebScraper {
 
-    protected fun fetchHtmlWithSelenium(url: String): String? {
+    protected fun fetchHtmlWithSelenium(
+        url: String,
+        waitUntil: WaitUntilState = WaitUntilState.DOMCONTENTLOADED
+    ): String? {
         Playwright.create().use { playwright ->
             val browser = playwright.chromium().launch(
                 BrowserType.LaunchOptions()
@@ -17,7 +20,7 @@ abstract class BaseWebScraper : WebScraper {
             browser.use {
                 val page = browser.newPage()
                 page.navigate(url, Page.NavigateOptions()
-                    .setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
+                    .setWaitUntil(waitUntil)
                     .setTimeout(60_000.0))
                 return page.content()
             }
