@@ -2,7 +2,6 @@ package ru.tickets.domain
 
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
@@ -17,41 +16,17 @@ import ru.tickets.db.schema.UserBotLinks
 import ru.tickets.db.schema.Users
 import ru.tickets.models.responses.MessageSendResponse
 import ru.tickets.models.responses.MessageSendResult
-import java.net.Authenticator
-import java.net.PasswordAuthentication
-
-data class TelegramProxyConfig(
-    val host: String,
-    val port: Int,
-    val user: String,
-    val password: String
-)
 
 class TelegramSenderService(
     private val database: Database,
-    private val botTokens: Map<String, String>,
-    private val proxy: TelegramProxyConfig? = null
+    private val botTokens: Map<String, String>
 ) {
     private val log = LoggerFactory.getLogger(TelegramSenderService::class.java)
 
     private val telegramJson = Json { ignoreUnknownKeys = true }
 
-    private val httpClient: HttpClient = run {
-        val proxyConfig = proxy
-        if (proxyConfig != null) {
-            Authenticator.setDefault(object : Authenticator() {
-                override fun getPasswordAuthentication() =
-                    PasswordAuthentication(proxyConfig.user, proxyConfig.password.toCharArray())
-            })
-        }
-        HttpClient(CIO) {
-            engine {
-                if (proxyConfig != null) {
-                    proxy = ProxyBuilder.socks(proxyConfig.host, proxyConfig.port)
-                }
-            }
-            install(ContentNegotiation) { json(telegramJson) }
-        }
+    private val httpClient = HttpClient(CIO) {
+        install(ContentNegotiation) { json(telegramJson) }
     }
 
     @Serializable
