@@ -1,6 +1,5 @@
 package ru.tickets.scraper
 
-import com.microsoft.playwright.Browser
 import ru.tickets.domain.ScrapedPerformance
 
 data class ScrapedSchedule(
@@ -12,5 +11,5 @@ data class ScrapedSchedule(
 interface WebScraper {
     val theatreSlug: String
     fun scrapeRepertoire(): List<ScrapedPerformance>
-    fun scrapeSchedule(performanceUrl: String, browser: Browser): List<ScrapedSchedule>
+    fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>
 }

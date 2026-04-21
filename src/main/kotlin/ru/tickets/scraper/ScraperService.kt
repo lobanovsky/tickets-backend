@@ -1,7 +1,5 @@
 package ru.tickets.scraper
 
-import com.microsoft.playwright.BrowserType
-import com.microsoft.playwright.Playwright
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -14,10 +12,6 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 
 private val REPERTOIRE_UPDATE_INTERVAL = 7.days
-
-private val BROWSER_LAUNCH_OPTIONS = BrowserType.LaunchOptions()
-    .setHeadless(true)
-    .setArgs(listOf("--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--no-zygote"))
 
 class ScraperService(
     private val performanceService: PerformanceService,
@@ -58,57 +52,51 @@ class ScraperService(
                     log.info("[${scraper.theatreSlug}] Репертуар обновлён")
                 }
 
-                // Step 2: Check tickets — one browser instance for the whole iteration
+                // Step 2: Check tickets for performances with active subscribers
+                val semaphore = Semaphore(2)
                 val performances = performanceService.findWithActiveSubscribers(theatreId)
                 log.info("[${scraper.theatreSlug}] Активных спектаклей с подписчиками: ${performances.size}")
 
-                if (performances.isNotEmpty()) {
-                    withContext(Dispatchers.IO) {
-                        Playwright.create().use { playwright ->
-                            playwright.chromium().launch(BROWSER_LAUNCH_OPTIONS).use { browser ->
-                                val semaphore = Semaphore(2)
-                                coroutineScope {
-                                    performances.map { perf ->
-                                        async {
-                                            semaphore.withPermit {
-                                                try {
-                                                    log.info("[${scraper.theatreSlug}] Проверка спектакля: ${perf.title} (${perf.url})")
-                                                    val schedule = scraper.scrapeSchedule(perf.url, browser)
-                                                    val available = schedule.filter { it.ticketsAvailable }
-                                                    log.info(
-                                                        "[${scraper.theatreSlug}] Результат проверки: ${perf.title}, " +
-                                                        "слотов=${schedule.size}, доступных=${available.size}"
-                                                    )
-                                                    if (available.isNotEmpty()) {
-                                                        val summary = available.joinToString("\n") { s ->
-                                                            buildString {
-                                                                append("• ${s.date}")
-                                                                if (s.time.isNotBlank()) append(" ${s.time}")
-                                                            }
-                                                        }
-                                                        val created = notificationService.createNotifications(perf.id, summary)
-                                                        val pending = notificationService.getPendingForPerformance(perf.id)
-                                                        val toSend = (created + pending).distinctBy { it.id }
-                                                        log.info("[${scraper.theatreSlug}] Билеты найдены: ${perf.title}, к отправке: ${toSend.size} (новых: ${created.size}, повторных: ${pending.size - created.size})")
-                                                        for (notif in toSend) {
-                                                            if (webhookClient.push(notif)) {
-                                                                notificationService.acknowledge(java.util.UUID.fromString(notif.id))
-                                                                log.info("[${scraper.theatreSlug}] Вебхук отправлен: telegramId=${notif.telegramId}")
-                                                            }
-                                                        }
-                                                    } else {
-                                                        log.info("[${scraper.theatreSlug}] Билеты не найдены: ${perf.title}")
-                                                    }
-                                                } catch (e: Exception) {
-                                                    log.error("[${scraper.theatreSlug}] Ошибка скрапинга ${perf.url}: ${e.message}")
-                                                }
+                coroutineScope {
+                    performances.map { perf ->
+                        async {
+                            semaphore.withPermit {
+                                try {
+                                    log.info("[${scraper.theatreSlug}] Проверка спектакля: ${perf.title} (${perf.url})")
+                                    val schedule = withContext(Dispatchers.IO) {
+                                        scraper.scrapeSchedule(perf.url)
+                                    }
+                                    val available = schedule.filter { it.ticketsAvailable }
+                                    log.info(
+                                        "[${scraper.theatreSlug}] Результат проверки: ${perf.title}, " +
+                                        "слотов=${schedule.size}, доступных=${available.size}"
+                                    )
+                                    if (available.isNotEmpty()) {
+                                        val summary = available.joinToString("\n") { s ->
+                                            buildString {
+                                                append("• ${s.date}")
+                                                if (s.time.isNotBlank()) append(" ${s.time}")
                                             }
                                         }
-                                    }.awaitAll()
+                                        val created = notificationService.createNotifications(perf.id, summary)
+                                        val pending = notificationService.getPendingForPerformance(perf.id)
+                                        val toSend = (created + pending).distinctBy { it.id }
+                                        log.info("[${scraper.theatreSlug}] Билеты найдены: ${perf.title}, к отправке: ${toSend.size} (новых: ${created.size}, повторных: ${pending.size - created.size})")
+                                        for (notif in toSend) {
+                                            if (webhookClient.push(notif)) {
+                                                notificationService.acknowledge(java.util.UUID.fromString(notif.id))
+                                                log.info("[${scraper.theatreSlug}] Вебхук отправлен: telegramId=${notif.telegramId}")
+                                            }
+                                        }
+                                    } else {
+                                        log.info("[${scraper.theatreSlug}] Билеты не найдены: ${perf.title}")
+                                    }
+                                } catch (e: Exception) {
+                                    log.error("[${scraper.theatreSlug}] Ошибка скрапинга ${perf.url}: ${e.message}")
                                 }
                             }
                         }
-                    }
+                    }.awaitAll()
                 }
             } catch (e: Exception) {
                 log.error("[${scraper.theatreSlug}] Ошибка в цикле скрапера: ${e.message}")

@@ -1,6 +1,5 @@
 package ru.tickets.scraper
 
-import com.microsoft.playwright.Browser
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import ru.tickets.domain.ScrapedPerformance
@@ -45,10 +44,10 @@ class FomenkiScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String, browser: Browser): List<ScrapedSchedule> {
+    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
         val schedules = mutableListOf<ScrapedSchedule>()
         try {
-            val html = fetchHtmlWithSelenium(browser, performanceUrl) ?: return schedules
+            val html = fetchHtmlWithSelenium(performanceUrl) ?: return schedules
             val doc = Jsoup.parse(html)
             for (block in doc.select("div.event")) {
                 val dateText = block.selectFirst("p.date")?.text()?.trim() ?: continue

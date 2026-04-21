@@ -1,6 +1,5 @@
 package ru.tickets.scraper
 
-import com.microsoft.playwright.Browser
 import com.microsoft.playwright.options.WaitUntilState
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
@@ -33,9 +32,9 @@ class LensovScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String, browser: Browser): List<ScrapedSchedule> {
+    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
         try {
-            val html = fetchHtmlWithSelenium(browser, performanceUrl, WaitUntilState.NETWORKIDLE) ?: return emptyList()
+            val html = fetchHtmlWithSelenium(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return emptyList()
             val schedules = parseScheduleHtml(html)
             if (schedules.isEmpty()) log.warn("[lensov] Расписание не найдено для $performanceUrl")
             return schedules
