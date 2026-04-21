@@ -1,29 +1,20 @@
 package ru.tickets.scraper
 
-import com.microsoft.playwright.BrowserType
+import com.microsoft.playwright.Browser
 import com.microsoft.playwright.Page
-import com.microsoft.playwright.Playwright
 import com.microsoft.playwright.options.WaitUntilState
 
 abstract class BaseWebScraper : WebScraper {
 
     protected fun fetchHtmlWithSelenium(
+        browser: Browser,
         url: String,
         waitUntil: WaitUntilState = WaitUntilState.DOMCONTENTLOADED
     ): String? {
-        Playwright.create().use { playwright ->
-            val browser = playwright.chromium().launch(
-                BrowserType.LaunchOptions()
-                    .setHeadless(true)
-                    .setArgs(listOf("--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--no-zygote"))
-            )
-            browser.use {
-                val page = browser.newPage()
-                page.navigate(url, Page.NavigateOptions()
-                    .setWaitUntil(waitUntil)
-                    .setTimeout(60_000.0))
-                return page.content()
-            }
+        val page = browser.newPage()
+        return page.use {
+            page.navigate(url, Page.NavigateOptions().setWaitUntil(waitUntil).setTimeout(60_000.0))
+            page.content()
         }
     }
 }

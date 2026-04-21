@@ -1,5 +1,6 @@
 package ru.tickets.scraper
 
+import com.microsoft.playwright.Browser
 import org.jsoup.Jsoup
 import org.slf4j.LoggerFactory
 import ru.tickets.domain.ScrapedPerformance
@@ -28,10 +29,10 @@ class NationsScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
+    override fun scrapeSchedule(performanceUrl: String, browser: Browser): List<ScrapedSchedule> {
         val schedules = mutableListOf<ScrapedSchedule>()
         try {
-            val html = fetchHtmlWithSelenium(performanceUrl) ?: return schedules
+            val html = fetchHtmlWithSelenium(browser, performanceUrl) ?: return schedules
             val doc = Jsoup.parse(html)
             for (item in doc.select(".play-info__meta-item")) {
                 val spans = item.select("span")
