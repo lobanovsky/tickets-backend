@@ -9,6 +9,7 @@ import ru.tickets.domain.NotificationService
 import ru.tickets.domain.PaidSubscriptionService
 import ru.tickets.domain.PerformanceService
 import ru.tickets.domain.SubscriptionScheduler
+import ru.tickets.domain.TelegramProxyConfig
 import ru.tickets.domain.TelegramSenderService
 import ru.tickets.routes.configureRouting
 import ru.tickets.scraper.*
@@ -36,7 +37,16 @@ fun Application.startScrapers() {
         val token = environment.config.propertyOrNull("bot-tokens.$slug")?.getString()
         if (!token.isNullOrBlank()) slug to token else null
     }.toMap()
-    val telegramSenderService = TelegramSenderService(database, botTokens)
+    val telegramProxy = environment.config.propertyOrNull("telegram-proxy.host")?.getString()
+        ?.takeIf { it.isNotBlank() }?.let {
+            TelegramProxyConfig(
+                host = it,
+                port = environment.config.propertyOrNull("telegram-proxy.port")?.getString()?.toIntOrNull() ?: 1080,
+                user = environment.config.propertyOrNull("telegram-proxy.user")?.getString() ?: "",
+                password = environment.config.propertyOrNull("telegram-proxy.password")?.getString() ?: ""
+            )
+        }
+    val telegramSenderService = TelegramSenderService(database, botTokens, telegramProxy)
     val subscriptionScheduler = SubscriptionScheduler(paidSubscriptionService, telegramSenderService)
 
     val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").associateWith { slug ->

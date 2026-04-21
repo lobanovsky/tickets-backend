@@ -27,6 +27,12 @@ bot-webhooks:
     url: ${BOT_WEBHOOK_URL_LENSOV:}
     secret: ${BOT_WEBHOOK_SECRET_LENSOV:}
 
+telegram-proxy:
+  host: ${TELEGRAM_PROXY_HOST:}
+  port: ${TELEGRAM_PROXY_PORT:}
+  user: ${TELEGRAM_PROXY_USER:}
+  password: ${TELEGRAM_PROXY_PASSWORD:}
+
 bot-tokens:
   vakhtangov: ${BOT_TOKEN_VAKHTANGOV:}
   ramt: ${BOT_TOKEN_RAMT:}

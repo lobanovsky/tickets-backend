@@ -25,7 +25,16 @@ fun Application.configureRouting() {
         val token = environment.config.propertyOrNull("bot-tokens.$slug")?.getString()
         if (!token.isNullOrBlank()) slug to token else null
     }.toMap()
-    val telegramSenderService = TelegramSenderService(database, botTokens)
+    val telegramProxy = environment.config.propertyOrNull("telegram-proxy.host")?.getString()
+        ?.takeIf { it.isNotBlank() }?.let {
+            TelegramProxyConfig(
+                host = it,
+                port = environment.config.propertyOrNull("telegram-proxy.port")?.getString()?.toIntOrNull() ?: 1080,
+                user = environment.config.propertyOrNull("telegram-proxy.user")?.getString() ?: "",
+                password = environment.config.propertyOrNull("telegram-proxy.password")?.getString() ?: ""
+            )
+        }
+    val telegramSenderService = TelegramSenderService(database, botTokens, telegramProxy)
 
     install(CORS) {
         anyHost()
