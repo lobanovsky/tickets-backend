@@ -1,18 +1,15 @@
 package ru.tickets.domain
 
-import java.time.LocalDate
-import java.time.LocalDateTime
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.*
 import ru.tickets.db.schema.PaidSubscriptions
 import ru.tickets.db.schema.Subscriptions
+import ru.tickets.db.schema.UserBotLinks
 import ru.tickets.db.schema.Users
 import ru.tickets.models.NotFoundException
 import ru.tickets.models.requests.SyncUserRequest
 import ru.tickets.models.responses.UserResponse
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 class UserService(private val database: Database) {
 
@@ -39,7 +36,7 @@ class UserService(private val database: Database) {
             .where { PaidSubscriptions.isActive eq true }
             .filter {
                 !it[PaidSubscriptions.startDate].isAfter(today) &&
-                !it[PaidSubscriptions.endDate].isBefore(today)
+                        !it[PaidSubscriptions.endDate].isBefore(today)
             }
             .map { it[PaidSubscriptions.userId] }
             .toSet()
@@ -59,7 +56,7 @@ class UserService(private val database: Database) {
         }
     }
 
-    suspend fun syncUser(req: SyncUserRequest): UserResponse = dbQuery(database) {
+    suspend fun syncUser(req: SyncUserRequest, botSlug: String): UserResponse = dbQuery(database) {
         val existing = Users.selectAll().where { Users.telegramId eq req.telegramId }.singleOrNull()
 
         if (existing == null) {
@@ -81,6 +78,7 @@ class UserService(private val database: Database) {
                 it[createdBy] = "system"
             }
 
+            upsertBotLink(id, botSlug)
             UserResponse(
                 id = id.toString(),
                 telegramId = req.telegramId,
@@ -99,6 +97,7 @@ class UserService(private val database: Database) {
                 it[username] = req.username
                 it[isActive] = true
             }
+            upsertBotLink(existing[Users.id], botSlug)
             UserResponse(
                 id = existing[Users.id].toString(),
                 telegramId = existing[Users.telegramId],
@@ -110,6 +109,25 @@ class UserService(private val database: Database) {
                 createdAt = existing[Users.createdAt].toString(),
                 hasPaidSubscription = false
             )
+        }
+    }
+
+    private fun upsertBotLink(userId: java.util.UUID, botSlug: String) {
+        val exists = UserBotLinks.selectAll()
+            .where { (UserBotLinks.userId eq userId) and (UserBotLinks.botSlug eq botSlug) }
+            .count() > 0
+        if (exists) {
+            UserBotLinks.update({ (UserBotLinks.userId eq userId) and (UserBotLinks.botSlug eq botSlug) }) {
+                it[UserBotLinks.isSubscribed] = true
+                it[UserBotLinks.checkedAt] = LocalDateTime.now()
+            }
+        } else {
+            UserBotLinks.insert {
+                it[UserBotLinks.userId] = userId
+                it[UserBotLinks.botSlug] = botSlug
+                it[UserBotLinks.isSubscribed] = true
+                it[checkedAt] = LocalDateTime.now()
+            }
         }
     }
 

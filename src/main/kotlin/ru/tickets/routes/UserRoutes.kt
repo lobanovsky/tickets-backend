@@ -14,8 +14,9 @@ import ru.tickets.security.BotPrincipal
 fun Route.userRoutes(userService: UserService, subscriptionService: SubscriptionService) {
     authenticate("bot-key") {
         post("/users/sync") {
+            val principal = call.principal<BotPrincipal>()!!
             val req = call.receive<SyncUserRequest>()
-            call.respond(HttpStatusCode.OK, userService.syncUser(req))
+            call.respond(HttpStatusCode.OK, userService.syncUser(req, principal.slug))
         }
 
         get("/users/{telegramId}/subscriptions") {
