@@ -7,6 +7,7 @@ import ru.tickets.db.schema.UserBotLinks
 import ru.tickets.db.schema.Users
 import ru.tickets.models.NotFoundException
 import ru.tickets.models.requests.SyncUserRequest
+import ru.tickets.models.responses.UserBotLinkResponse
 import ru.tickets.models.responses.UserResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -41,6 +42,12 @@ class UserService(private val database: Database) {
             .map { it[PaidSubscriptions.userId] }
             .toSet()
 
+        val botLinksByUserId = UserBotLinks.selectAll()
+            .groupBy { it[UserBotLinks.userId] }
+            .mapValues { (_, rows) ->
+                rows.map { UserBotLinkResponse(it[UserBotLinks.botSlug], it[UserBotLinks.isSubscribed]) }
+            }
+
         query.orderBy(Users.createdAt, SortOrder.DESC).map { row ->
             UserResponse(
                 id = row[Users.id].toString(),
@@ -51,7 +58,8 @@ class UserService(private val database: Database) {
                 isActive = row[Users.isActive],
                 isVip = row[Users.isVip],
                 createdAt = row[Users.createdAt].toString(),
-                hasPaidSubscription = row[Users.id] in paidUserIds
+                hasPaidSubscription = row[Users.id] in paidUserIds,
+                botLinks = botLinksByUserId[row[Users.id]] ?: emptyList()
             )
         }
     }

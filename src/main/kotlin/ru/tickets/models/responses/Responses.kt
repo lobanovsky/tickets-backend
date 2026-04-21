@@ -3,6 +3,12 @@ package ru.tickets.models.responses
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class UserBotLinkResponse(
+    val botSlug: String,
+    val isSubscribed: Boolean
+)
+
+@Serializable
 data class UserResponse(
     val id: String,
     val telegramId: Long,
@@ -12,7 +18,8 @@ data class UserResponse(
     val isActive: Boolean,
     val isVip: Boolean,
     val createdAt: String,
-    val hasPaidSubscription: Boolean
+    val hasPaidSubscription: Boolean,
+    val botLinks: List<UserBotLinkResponse> = emptyList()
 )
 
 @Serializable
