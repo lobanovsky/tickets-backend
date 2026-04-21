@@ -9,6 +9,7 @@ import ru.tickets.domain.NotificationService
 import ru.tickets.domain.PaidSubscriptionService
 import ru.tickets.domain.PerformanceService
 import ru.tickets.domain.SubscriptionScheduler
+import ru.tickets.domain.TelegramSenderService
 import ru.tickets.routes.configureRouting
 import ru.tickets.scraper.*
 import ru.tickets.security.configureSecurity
@@ -31,7 +32,12 @@ fun Application.startScrapers() {
     val performanceService = PerformanceService(database)
     val notificationService = NotificationService(database)
     val paidSubscriptionService = PaidSubscriptionService(database)
-    val subscriptionScheduler = SubscriptionScheduler(paidSubscriptionService)
+    val botTokens = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").mapNotNull { slug ->
+        val token = environment.config.propertyOrNull("bot-tokens.$slug")?.getString()
+        if (!token.isNullOrBlank()) slug to token else null
+    }.toMap()
+    val telegramSenderService = TelegramSenderService(database, botTokens)
+    val subscriptionScheduler = SubscriptionScheduler(paidSubscriptionService, telegramSenderService)
 
     val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").associateWith { slug ->
         BotWebhookConfig(

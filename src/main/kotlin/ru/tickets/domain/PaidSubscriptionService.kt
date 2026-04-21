@@ -1,6 +1,7 @@
 package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SortOrder
@@ -91,6 +92,14 @@ class PaidSubscriptionService(private val database: Database) {
             hasActiveSubscription = active != null,
             subscription = active?.toPaidSubscriptionResponse()
         )
+    }
+
+    suspend fun findExpiringTomorrow(): List<Long> = dbQuery(database) {
+        val tomorrow = LocalDate.now().plusDays(1)
+        PaidSubscriptions.join(Users, JoinType.INNER, PaidSubscriptions.userId, Users.id)
+            .selectAll()
+            .where { (PaidSubscriptions.isActive eq true) and (PaidSubscriptions.endDate eq tomorrow) }
+            .map { it[Users.telegramId] }
     }
 
     suspend fun deactivateExpired(): Int = dbQuery(database) {
