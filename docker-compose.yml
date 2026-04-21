@@ -34,6 +34,7 @@ services:
       BOT_WEBHOOK_URL_LENSOV: ${BOT_WEBHOOK_URL_LENSOV}
       BOT_WEBHOOK_SECRET_LENSOV: ${BOT_WEBHOOK_SECRET_LENSOV}
       # telegram-api-key
+      TELEGRAM_API_URL: ${TELEGRAM_API_URL}
       TELEGRAM_API_KEY: ${TELEGRAM_API_KEY}
     volumes:
       - ./logs:/app/logs

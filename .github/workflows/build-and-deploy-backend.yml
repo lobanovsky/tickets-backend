@@ -82,6 +82,7 @@ jobs:
           echo "BOT_WEBHOOK_URL_LENSOV=${{ secrets.BOT_WEBHOOK_URL_LENSOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_LENSOV=${{ secrets.BOT_WEBHOOK_SECRET_LENSOV }}" >> .env
           echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> .env
+          echo "TELEGRAM_API_URL=${{ secrets.TELEGRAM_API_URL }}" >> .env
 
       - name: copy files to host
         uses: appleboy/scp-action@v0.1.7
