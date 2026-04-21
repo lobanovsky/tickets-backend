@@ -34,6 +34,10 @@ bot-tokens:
   fomenki: ${BOT_TOKEN_FOMENKI:}
   lensov: ${BOT_TOKEN_LENSOV:}
 
+telegram-api:
+  url: ${TELEGRAM_API_URL:http://localhost:8080}
+  key: ${TELEGRAM_API_KEY:telegram-api}
+
 api-keys:
   ramt: ${RAMT_API_KEY:ramt-secret}
   nations: ${NATIONS_API_KEY:nations-secret}

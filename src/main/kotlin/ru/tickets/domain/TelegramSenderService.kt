@@ -19,7 +19,9 @@ import ru.tickets.models.responses.MessageSendResult
 
 class TelegramSenderService(
     private val database: Database,
-    private val botTokens: Map<String, String>
+    private val botTokens: Map<String, String>,
+    private val telegramApiUrl: String,
+    private val telegramApiKey: String
 ) {
     private val log = LoggerFactory.getLogger(TelegramSenderService::class.java)
 
@@ -31,6 +33,7 @@ class TelegramSenderService(
 
     @Serializable
     private data class TelegramSendRequest(
+        @SerialName("bot_token") val botToken: String,
         @SerialName("chat_id") val chatId: Long,
         val text: String,
         @SerialName("parse_mode") val parseMode: String? = null
@@ -106,9 +109,10 @@ class TelegramSenderService(
         text: String,
         parseMode: String?
     ): Pair<Boolean, String?> = try {
-        val response = httpClient.post("https://api.telegram.org/bot$token/sendMessage") {
+        val response = httpClient.post("$telegramApiUrl/send-message") {
+            header("X-Api-Key", telegramApiKey)
             contentType(ContentType.Application.Json)
-            setBody(TelegramSendRequest(telegramId, text, parseMode))
+            setBody(TelegramSendRequest(token, telegramId, text, parseMode))
         }
         val tgResponse = response.body<TelegramResponse>()
         if (tgResponse.ok) true to null else false to tgResponse.description

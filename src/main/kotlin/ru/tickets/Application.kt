@@ -36,7 +36,9 @@ fun Application.startScrapers() {
         val token = environment.config.propertyOrNull("bot-tokens.$slug")?.getString()
         if (!token.isNullOrBlank()) slug to token else null
     }.toMap()
-    val telegramSenderService = TelegramSenderService(database, botTokens)
+    val telegramApiUrl = environment.config.propertyOrNull("telegram-api.url")?.getString() ?: "http://localhost:8080"
+    val telegramApiKey = environment.config.propertyOrNull("telegram-api.key")?.getString() ?: ""
+    val telegramSenderService = TelegramSenderService(database, botTokens, telegramApiUrl, telegramApiKey)
     val subscriptionScheduler = SubscriptionScheduler(paidSubscriptionService, telegramSenderService)
 
     val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").associateWith { slug ->
