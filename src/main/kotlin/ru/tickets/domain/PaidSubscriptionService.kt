@@ -61,9 +61,6 @@ class PaidSubscriptionService(private val database: Database) {
     }
 
     suspend fun update(id: UUID, req: UpdatePaidSubscriptionRequest): PaidSubscriptionResponse = dbQuery(database) {
-        val row = PaidSubscriptions.selectAll().where { PaidSubscriptions.id eq id }.singleOrNull()
-            ?: throw NotFoundException("Paid subscription not found")
-
         val newEndDate = req.endDate?.let {
             runCatching { LocalDate.parse(it) }.getOrElse { throw BadRequestException("Invalid endDate format, expected YYYY-MM-DD") }
         }
@@ -102,12 +99,19 @@ class PaidSubscriptionService(private val database: Database) {
             .map { it[Users.telegramId] }
     }
 
-    suspend fun deactivateExpired(): Int = dbQuery(database) {
-        PaidSubscriptions.update({
-            (PaidSubscriptions.isActive eq true) and (PaidSubscriptions.endDate less LocalDate.now())
-        }) {
-            it[isActive] = false
+    suspend fun deactivateExpired(): List<Long> = dbQuery(database) {
+        val expiredCondition = (PaidSubscriptions.isActive eq true) and (PaidSubscriptions.endDate less LocalDate.now())
+
+        val telegramIds = PaidSubscriptions.join(Users, JoinType.INNER, PaidSubscriptions.userId, Users.id)
+            .selectAll()
+            .where { expiredCondition }
+            .map { it[Users.telegramId] }
+
+        if (telegramIds.isNotEmpty()) {
+            PaidSubscriptions.update({ expiredCondition }) { it[isActive] = false }
         }
+
+        telegramIds
     }
 
     private fun org.jetbrains.exposed.sql.ResultRow.toPaidSubscriptionResponse() = PaidSubscriptionResponse(
