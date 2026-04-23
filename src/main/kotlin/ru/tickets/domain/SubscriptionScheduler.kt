@@ -18,12 +18,13 @@ class SubscriptionScheduler(
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     fun start() {
-        scope.launch { runDailyLoop() }
+        scope.launch { runDeactivationLoop() }
+        scope.launch { runExpiringWarningLoop() }
         log.info("SubscriptionScheduler started")
     }
 
-    private suspend fun runDailyLoop() {
-        delay(millisUntilNext9AM().milliseconds)
+    private suspend fun runDeactivationLoop() {
+        delay(millisUntilNextTime(9, 0).milliseconds)
         while (true) {
             try {
                 val deactivated = paidSubscriptionService.deactivateExpired()
@@ -48,7 +49,13 @@ class SubscriptionScheduler(
             } catch (e: Exception) {
                 log.error("Ошибка при деактивации подписок: ${e.message}")
             }
+            delay(millisUntilNextTime(9, 0).milliseconds)
+        }
+    }
 
+    private suspend fun runExpiringWarningLoop() {
+        delay(millisUntilNextTime(20, 0).milliseconds)
+        while (true) {
             try {
                 val expiring = paidSubscriptionService.findExpiringTomorrow()
                 expiring.forEach { telegramId ->
@@ -70,16 +77,15 @@ class SubscriptionScheduler(
             } catch (e: Exception) {
                 log.error("Ошибка при отправке уведомлений об истечении подписок: ${e.message}")
             }
-
-            delay(millisUntilNext9AM().milliseconds)
+            delay(millisUntilNextTime(20, 0).milliseconds)
         }
     }
 
-    private fun millisUntilNext9AM(): Long {
+    private fun millisUntilNextTime(hour: Int, minute: Int): Long {
         val moscow = ZoneId.of("Europe/Moscow")
         val now = ZonedDateTime.now(moscow)
-        var next9AM = now.toLocalDate().atTime(9, 0).atZone(moscow)
-        if (!next9AM.isAfter(now)) next9AM = next9AM.plusDays(1)
-        return java.time.Duration.between(now, next9AM).toMillis()
+        var next = now.toLocalDate().atTime(hour, minute).atZone(moscow)
+        if (!next.isAfter(now)) next = next.plusDays(1)
+        return java.time.Duration.between(now, next).toMillis()
     }
 }
