@@ -26,6 +26,9 @@ bot-webhooks:
   lensov:
     url: ${BOT_WEBHOOK_URL_LENSOV:}
     secret: ${BOT_WEBHOOK_SECRET_LENSOV:}
+  mxt:
+    url: ${BOT_WEBHOOK_URL_MXT:}
+    secret: ${BOT_WEBHOOK_SECRET_MXT:}
 
 bot-tokens:
   vakhtangov: ${BOT_TOKEN_VAKHTANGOV:}
@@ -33,6 +36,7 @@ bot-tokens:
   nations: ${BOT_TOKEN_NATIONS:}
   fomenki: ${BOT_TOKEN_FOMENKI:}
   lensov: ${BOT_TOKEN_LENSOV:}
+  mxt: ${BOT_TOKEN_MXT:}
 
 telegram-api:
   url: ${TELEGRAM_API_URL:http://localhost:8080}
@@ -44,4 +48,5 @@ api-keys:
   vakhtangov: ${VAKHTANGOV_API_KEY:vakhtangov-secret}
   fomenki: ${FOMENKI_API_KEY:fomenki-secret}
   lensov: ${LENSOV_API_KEY:lensov-secret}
+  mxt: ${MXT_API_KEY:mxt-secret}
   admin: ${ADMIN_API_KEY:admin-secret}

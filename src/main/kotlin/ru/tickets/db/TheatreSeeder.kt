@@ -12,7 +12,8 @@ fun seedTheatres(database: Database) {
         Triple("nations", "Театр Наций", "https://theatreofnations.ru"),
         Triple("vakhtangov", "Театр им. Вахтангова", "https://vakhtangov.ru"),
         Triple("fomenki", "Мастерская Петра Фоменко", "https://fomenki.ru"),
-        Triple("lensov", "Театр им. Ленсовета", "https://lensov-theatre.spb.ru")
+        Triple("lensov", "Театр им. Ленсовета", "https://lensov-theatre.spb.ru"),
+        Triple("mxt", "МХТ им. А.П. Чехова", "https://mxat.ru")
     )
 
     transaction(database) {

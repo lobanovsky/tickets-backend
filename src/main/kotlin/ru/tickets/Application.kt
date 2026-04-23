@@ -32,7 +32,7 @@ fun Application.startScrapers() {
     val performanceService = PerformanceService(database)
     val notificationService = NotificationService(database)
     val paidSubscriptionService = PaidSubscriptionService(database)
-    val botTokens = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").mapNotNull { slug ->
+    val botTokens = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov", "mxt").mapNotNull { slug ->
         val token = environment.config.propertyOrNull("bot-tokens.$slug")?.getString()
         if (!token.isNullOrBlank()) slug to token else null
     }.toMap()
@@ -41,7 +41,7 @@ fun Application.startScrapers() {
     val telegramSenderService = TelegramSenderService(database, botTokens, telegramApiUrl, telegramApiKey)
     val subscriptionScheduler = SubscriptionScheduler(paidSubscriptionService, telegramSenderService)
 
-    val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").associateWith { slug ->
+    val webhooks = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov", "mxt").associateWith { slug ->
         BotWebhookConfig(
             url = environment.config.propertyOrNull("bot-webhooks.$slug.url")?.getString() ?: "",
             secret = environment.config.propertyOrNull("bot-webhooks.$slug.secret")?.getString() ?: ""
@@ -55,7 +55,8 @@ fun Application.startScrapers() {
         NationsScraper(),
         VakhtangovScraper(),
         FomenkiScraper(),
-        LensovScraper()
+        LensovScraper(),
+        MxtScraper()
     )
     // Оркестратор: запускает все скраперы по расписанию, сохраняет спектакли и рассылает уведомления
     val scraperService = ScraperService(performanceService, notificationService, webhookClient, scrapers)

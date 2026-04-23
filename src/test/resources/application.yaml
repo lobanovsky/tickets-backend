@@ -15,4 +15,6 @@ api-keys:
   nations: "nations-secret"
   vakhtangov: "vakhtangov-secret"
   fomenki: "fomenki-secret"
+  lensov: "lensov-secret"
+  mxt: "mxt-secret"
   admin: "admin-secret"
