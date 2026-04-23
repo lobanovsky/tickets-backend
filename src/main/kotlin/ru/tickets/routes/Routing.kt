@@ -21,7 +21,7 @@ fun Application.configureRouting() {
     val notificationService = NotificationService(database)
     val paidSubscriptionService = PaidSubscriptionService(database)
 
-    val botTokens = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov").mapNotNull { slug ->
+    val botTokens = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov", "mxt").mapNotNull { slug ->
         val token = environment.config.propertyOrNull("bot-tokens.$slug")?.getString()
         if (!token.isNullOrBlank()) slug to token else null
     }.toMap()
