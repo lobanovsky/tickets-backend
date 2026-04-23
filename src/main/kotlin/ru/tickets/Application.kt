@@ -51,11 +51,11 @@ fun Application.startScrapers() {
 
     // Один скрапер на каждый театр — каждый умеет парсить расписание своего сайта
     val scrapers = listOf(
-        RamtScraper(),
-        NationsScraper(),
-        VakhtangovScraper(),
-        FomenkiScraper(),
-        LensovScraper(),
+//        RamtScraper(),
+//        NationsScraper(),
+//        VakhtangovScraper(),
+//        FomenkiScraper(),
+//        LensovScraper(),
         MxtScraper()
     )
     // Оркестратор: запускает все скраперы по расписанию, сохраняет спектакли и рассылает уведомления

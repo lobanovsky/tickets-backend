@@ -2,6 +2,7 @@ package ru.tickets.scraper
 
 import com.microsoft.playwright.options.WaitUntilState
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
 import org.slf4j.LoggerFactory
 import ru.tickets.domain.ScrapedPerformance
 
@@ -11,22 +12,28 @@ class MxtScraper : BaseWebScraper() {
     private val log = LoggerFactory.getLogger(MxtScraper::class.java)
     private val baseUrl = "https://mxat.ru"
     private val repertoireUrls = listOf("$baseUrl/repertuar/current/", "$baseUrl/repertuar/soon/")
+    private val performanceLinkSelector = "a[href*=/repertuar/show/]"
+    private val ticketLinkSelector = "a[href]"
+    private val sceneRegex = Regex("(Основная сцена|Малая сцена|Новая сцена|Дворец на Яузе|Театриум на Серпуховке|Портретное фойе)")
+    private val scheduleRegex = Regex(
+        "(\\d{1,2}\\s+[А-Яа-яЁё]+(?:,\\s*[А-Яа-яЁё]{2})?)(?:\\s+\\1)?(?:\\s*[∙·]\\s*|\\s+)?(\\d{1,2}:\\d{2})?"
+    )
 
     override fun scrapeRepertoire(): List<ScrapedPerformance> {
         val performances = mutableListOf<ScrapedPerformance>()
         val seen = mutableSetOf<String>()
         for (repertoireUrl in repertoireUrls) {
             try {
-                val doc = Jsoup.connect(repertoireUrl)
+                val html = Jsoup.connect(repertoireUrl)
                     .userAgent("Mozilla/5.0 (compatible; bot)")
                     .get()
-                for (a in doc.select("div.performance-item h3 a[href*=/repertuar/show/]")) {
-                    val title = a.text().trim().ifEmpty { continue }
-                    val href = a.attr("href").trim()
-                    val url = if (href.startsWith("http")) href else "$baseUrl$href"
-                    val scene = a.closest("div.performance-item")
-                        ?.selectFirst("div.scene-label")?.text()?.trim()
-                    if (seen.add(url)) performances.add(ScrapedPerformance(title = title, url = url, scene = scene))
+                    .outerHtml()
+                val parsed = parseRepertoireHtml(html)
+                log.info("[mxt] Для $repertoireUrl найдено ${parsed.size} карточек спектаклей")
+                parsed.forEach { performance ->
+                    if (seen.add(performance.url)) {
+                        performances.add(performance)
+                    }
                 }
             } catch (e: Exception) {
                 log.error("[mxt] Ошибка при парсинге репертуара $repertoireUrl: ${e.message}")
@@ -50,27 +57,99 @@ class MxtScraper : BaseWebScraper() {
 
     internal fun parseScheduleHtml(html: String): List<ScrapedSchedule> {
         val doc = Jsoup.parse(html)
-        // Ищем блоки с датами показа. Структура mxat.ru (уточнить по реальному рендеру):
-        // .schedule-item или .afisha-item — контейнер одного сеанса
-        // Кнопки — <a>-элементы: "Купить билет" или "Оставить заявку"
-        val schedules = mutableListOf<ScrapedSchedule>()
-        for (selector in listOf(".schedule-item", ".afisha-item", ".seance", ".timetable-item")) {
-            val items = doc.select(selector)
-            if (items.isEmpty()) continue
-            for (item in items) {
-                val dateText = item.select(".date, .day, time, [class*=date], [class*=day]")
-                    .firstOrNull()?.text()?.trim() ?: continue
-                val timeText = item.select(".time, [class*=time]").firstOrNull()?.text()?.trim() ?: ""
-                val ticketsAvailable = item.select("a").any { a ->
-                    a.text().contains("купить", ignoreCase = true)
+        val schedules = linkedMapOf<Pair<String, String>, ScrapedSchedule>()
+
+        doc.select(ticketLinkSelector)
+            .filter { isTicketLink(it) }
+            .forEach { ticketLink ->
+                val scheduleContainer = findScheduleContainer(ticketLink)
+                val context = scheduleContainer?.text()?.normalizeWhitespace().orEmpty()
+                if (context.isBlank()) return@forEach
+
+                val matches = scheduleRegex.findAll(context).toList()
+                if (matches.isEmpty()) return@forEach
+
+                matches.forEach matchesLoop@{ match ->
+                    val date = match.groupValues[1].normalizeWhitespace().trim()
+                    val time = match.groupValues.getOrNull(2)?.normalizeWhitespace()?.trim().orEmpty()
+                    if (date.isBlank()) return@matchesLoop
+                    val key = date to time
+                    schedules.putIfAbsent(
+                        key,
+                        ScrapedSchedule(
+                            date = date,
+                            time = time,
+                            ticketsAvailable = context.contains("Купить билет", ignoreCase = true)
+                        )
+                    )
                 }
-                schedules.add(ScrapedSchedule(date = dateText, time = timeText, ticketsAvailable = ticketsAvailable))
             }
-            log.info("[mxt] Использован селектор '$selector', найдено ${schedules.size} сеансов")
-            return schedules
+
+        if (schedules.isEmpty()) {
+            val candidateCount = doc.select(ticketLinkSelector).count { isTicketLink(it) }
+            log.warn(
+                "[mxt] Расписание не распознано. Найдено ссылок на билеты: $candidateCount. " +
+                    "Фрагмент HTML:\n${doc.body().html().take(1500)}"
+            )
         }
-        // Если ни один селектор не сработал — логируем для отладки
-        log.warn("[mxt] Ни один селектор расписания не сработал. Фрагмент HTML:\n${html.take(2000)}")
-        return emptyList()
+
+        return schedules.values.toList()
     }
+
+    internal fun parseRepertoireHtml(html: String): List<ScrapedPerformance> {
+        val doc = Jsoup.parse(html, baseUrl)
+        val seen = mutableSetOf<String>()
+        return doc.select(performanceLinkSelector).mapNotNull { link ->
+            val url = link.absUrl("href").trim().ifEmpty { return@mapNotNull null }
+            if (!seen.add(url)) return@mapNotNull null
+
+            val title = extractTitle(link) ?: return@mapNotNull null
+            val scene = extractScene(link)
+            ScrapedPerformance(title = title, url = url, scene = scene)
+        }
+    }
+
+    private fun extractTitle(link: Element): String? {
+        val directTitle = link.text().normalizeWhitespace().trim()
+        if (directTitle.isNotBlank()) return directTitle
+
+        val container = findPerformanceContainer(link) ?: return null
+        return container.select("h1, h2, h3, h4").firstNotNullOfOrNull { heading ->
+            heading.text().normalizeWhitespace().trim().takeIf { it.isNotBlank() }
+        }
+    }
+
+    private fun extractScene(link: Element): String? {
+        val container = findPerformanceContainer(link) ?: return null
+        return sceneRegex.find(container.text().normalizeWhitespace())?.value
+    }
+
+    private fun findPerformanceContainer(link: Element): Element? {
+        return link.parents().firstOrNull { parent ->
+            val text = parent.text().normalizeWhitespace()
+            text.isNotBlank() && text.length <= 500 && sceneRegex.containsMatchIn(text)
+        } ?: link.parents().firstOrNull { parent ->
+            val headings = parent.select("h1, h2, h3, h4")
+            headings.any { it.text().normalizeWhitespace().isNotBlank() } && parent.text().length <= 500
+        }
+    }
+
+    private fun findScheduleContainer(link: Element): Element? {
+        return link.parents().firstOrNull { parent ->
+            val text = parent.text().normalizeWhitespace()
+            text.length in 10..250 &&
+                scheduleRegex.containsMatchIn(text) &&
+                text.contains("билет", ignoreCase = true)
+        }
+    }
+
+    private fun isTicketLink(link: Element): Boolean {
+        val text = link.text().normalizeWhitespace()
+        val href = link.attr("href")
+        return text.contains("Купить билет", ignoreCase = true) ||
+            text.equals("Билеты", ignoreCase = true) ||
+            href.contains("profticket", ignoreCase = true)
+    }
+
+    private fun String.normalizeWhitespace(): String = replace(Regex("\\s+"), " ")
 }
