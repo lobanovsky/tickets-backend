@@ -57,20 +57,27 @@ jobs:
       - name: Create .env file for Docker
         run: |
           echo "TAG=${{ env.SHORT_SHA }}" > .env
+          
           echo "DB_URL=${{ secrets.DB_URL }}" >> .env
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          
           echo "ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}" >> .env
+          
           echo "VAKHTANGOV_API_KEY=${{ secrets.VAKHTANGOV_API_KEY }}" >> .env
-          echo "FOMENKI_API_KEY=${{ secrets.FOMENKI_API_KEY }}" >> .env
-          echo "NATIONS_API_KEY=${{ secrets.NATIONS_API_KEY }}" >> .env
-          echo "LENSOV_API_KEY=${{ secrets.LENSOV_API_KEY }}" >> .env          
           echo "RAMT_API_KEY=${{ secrets.RAMT_API_KEY }}" >> .env
+          echo "NATIONS_API_KEY=${{ secrets.NATIONS_API_KEY }}" >> .env
+          echo "FOMENKI_API_KEY=${{ secrets.FOMENKI_API_KEY }}" >> .env
+          echo "LENSOV_API_KEY=${{ secrets.LENSOV_API_KEY }}" >> .env          
+          echo "MXT_API_KEY=${{ secrets.MXT_API_KEY }}" >> .env          
+          
           echo "BOT_TOKEN_VAKHTANGOV=${{ secrets.BOT_TOKEN_VAKHTANGOV }}" >> .env
           echo "BOT_TOKEN_RAMT=${{ secrets.BOT_TOKEN_RAMT }}" >> .env
           echo "BOT_TOKEN_NATIONS=${{ secrets.BOT_TOKEN_NATIONS }}" >> .env
           echo "BOT_TOKEN_FOMENKI=${{ secrets.BOT_TOKEN_FOMENKI }}" >> .env
           echo "BOT_TOKEN_LENSOV=${{ secrets.BOT_TOKEN_LENSOV }}" >> .env
+          echo "BOT_TOKEN_MXT=${{ secrets.BOT_TOKEN_MXT }}" >> .env
+          
           echo "BOT_WEBHOOK_URL_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_URL_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_SECRET_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_URL_FOMENKI=${{ secrets.BOT_WEBHOOK_URL_FOMENKI }}" >> .env
@@ -81,6 +88,9 @@ jobs:
           echo "BOT_WEBHOOK_SECRET_RAMT=${{ secrets.BOT_WEBHOOK_SECRET_RAMT }}" >> .env        
           echo "BOT_WEBHOOK_URL_LENSOV=${{ secrets.BOT_WEBHOOK_URL_LENSOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_LENSOV=${{ secrets.BOT_WEBHOOK_SECRET_LENSOV }}" >> .env
+          echo "BOT_WEBHOOK_URL_MXT=${{ secrets.BOT_WEBHOOK_URL_MXT }}" >> .env
+          echo "BOT_WEBHOOK_SECRET_MXT=${{ secrets.BOT_WEBHOOK_SECRET_MXT }}" >> .env
+          
           echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> .env
           echo "TELEGRAM_API_URL=${{ secrets.TELEGRAM_API_URL }}" >> .env
 
