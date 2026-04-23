@@ -2,6 +2,7 @@ package ru.tickets.scraper
 
 import com.microsoft.playwright.options.WaitUntilState
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.slf4j.LoggerFactory
 import ru.tickets.domain.ScrapedPerformance
@@ -24,15 +25,20 @@ class MxtScraper : BaseWebScraper() {
         val seen = mutableSetOf<String>()
         for (repertoireUrl in repertoireUrls) {
             try {
-                val html = Jsoup.connect(repertoireUrl)
-                    .userAgent("Mozilla/5.0 (compatible; bot)")
-                    .get()
-                    .outerHtml()
-                val parsed = parseRepertoireHtml(html)
-                log.info("[mxt] Для $repertoireUrl найдено ${parsed.size} карточек спектаклей")
-                parsed.forEach { performance ->
-                    if (seen.add(performance.url)) {
-                        performances.add(performance)
+                val pageUrls = fetchRepertoirePageUrls(repertoireUrl)
+                log.info("[mxt] Для $repertoireUrl найдено ${pageUrls.size} страниц репертуара")
+
+                pageUrls.forEach { pageUrl ->
+                    val html = Jsoup.connect(pageUrl)
+                        .userAgent("Mozilla/5.0 (compatible; bot)")
+                        .get()
+                        .outerHtml()
+                    val parsed = parseRepertoireHtml(html)
+                    log.info("[mxt] Для $pageUrl найдено ${parsed.size} карточек спектаклей")
+                    parsed.forEach { performance ->
+                        if (seen.add(performance.url)) {
+                            performances.add(performance)
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -109,6 +115,21 @@ class MxtScraper : BaseWebScraper() {
         }
     }
 
+    internal fun parseRepertoirePageUrls(indexUrl: String, html: String): List<String> {
+        val doc = Jsoup.parse(html, baseUrl)
+        return listOf(indexUrl)
+            .plus(
+                doc.select("a[href]")
+                    .mapNotNull { link ->
+                        link.absUrl("href")
+                            .trim()
+                            .takeIf { href -> isRepertoirePageUrl(indexUrl, href) }
+                    }
+            )
+            .distinct()
+            .sortedWith(compareBy({ pageNumber(it) }, { it }))
+    }
+
     private fun extractTitle(link: Element): String? {
         val directTitle = link.text().normalizeWhitespace().trim()
         if (directTitle.isNotBlank()) return directTitle
@@ -149,6 +170,30 @@ class MxtScraper : BaseWebScraper() {
         return text.contains("Купить билет", ignoreCase = true) ||
             text.equals("Билеты", ignoreCase = true) ||
             href.contains("profticket", ignoreCase = true)
+    }
+
+    private fun fetchRepertoirePageUrls(indexUrl: String): List<String> {
+        val doc = loadDocument(indexUrl)
+        return parseRepertoirePageUrls(indexUrl, doc.outerHtml())
+    }
+
+    private fun loadDocument(url: String): Document {
+        return Jsoup.connect(url)
+            .userAgent("Mozilla/5.0 (compatible; bot)")
+            .get()
+    }
+
+    private fun isRepertoirePageUrl(indexUrl: String, href: String): Boolean {
+        return href.startsWith(indexUrl) && href.contains("PAGEN_")
+    }
+
+    private fun pageNumber(url: String): Int {
+        return Regex("""[?&]PAGEN_\d+=(\d+)""")
+            .find(url)
+            ?.groupValues
+            ?.getOrNull(1)
+            ?.toIntOrNull()
+            ?: 1
     }
 
     private fun String.normalizeWhitespace(): String = replace(Regex("\\s+"), " ")

@@ -64,6 +64,30 @@ class MxtScraperTest {
     }
 
     @Test
+    fun parseRepertoirePageUrls_collectsPaginationForIndexPage() {
+        val pageUrls = scraper.parseRepertoirePageUrls(
+            "https://mxat.ru/repertuar/current/",
+            """
+            <div class="pagination">
+              <a href="/repertuar/current/?PAGEN_1=3">3</a>
+              <a href="/repertuar/current/?PAGEN_1=2">2</a>
+              <a href="/repertuar/current/?PAGEN_1=2">2</a>
+              <a href="/repertuar/soon/?PAGEN_1=2">foreign</a>
+            </div>
+            """.trimIndent()
+        )
+
+        assertEquals(
+            listOf(
+                "https://mxat.ru/repertuar/current/",
+                "https://mxat.ru/repertuar/current/?PAGEN_1=2",
+                "https://mxat.ru/repertuar/current/?PAGEN_1=3"
+            ),
+            pageUrls
+        )
+    }
+
+    @Test
     fun parseScheduleHtml_extractsDatesTimesAndAvailability() {
         val schedules = scraper.parseScheduleHtml(
             """
