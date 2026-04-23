@@ -90,18 +90,10 @@ class MxtScraperTest {
     @Test
     fun parseScheduleHtml_extractsDatesTimesAndAvailability() {
         val schedules = scraper.parseScheduleHtml(
-            """
-            <div class="performance-dates">
-              <div class="performance-date">
-                <div>17 мая, Вс ∙ 19:00</div>
-                <a href="https://spa.profticket.ru/widget/">Купить билет</a>
-              </div>
-              <div class="performance-date">
-                <div>18 мая, Пн ∙ 19:00</div>
-                <a href="https://spa.profticket.ru/widget/">Купить билет</a>
-              </div>
-            </div>
-            """.trimIndent()
+            scheduleHtml(
+                slot("2026-05-17 19:00", "17 мая, Вс", "19:00", hasTickets = true),
+                slot("2026-05-18 19:00", "18 мая, Пн", "19:00", hasTickets = true)
+            )
         )
 
         assertEquals(2, schedules.size)
@@ -111,14 +103,9 @@ class MxtScraperTest {
     }
 
     @Test
-    fun parseScheduleHtml_marksScheduleUnavailableWithoutBuyTicketButton() {
+    fun parseScheduleHtml_marksScheduleUnavailableWhenNoTickets() {
         val schedules = scraper.parseScheduleHtml(
-            """
-            <div class="performance-date">
-              <div>24 июн, Ср ∙ 19:00</div>
-              <a href="https://spa.profticket.ru/widget/">Билеты</a>
-            </div>
-            """.trimIndent()
+            scheduleHtml(slot("2026-06-24 19:00", "24 июн, Ср", "19:00", hasTickets = false))
         )
 
         assertEquals(1, schedules.size)
@@ -141,4 +128,31 @@ class MxtScraperTest {
           <div>Купить билет</div>
         </div>
     """.trimIndent()
+
+    private fun scheduleHtml(vararg slots: String): String = slots.joinToString("\n")
+
+    private fun slot(datetime: String, dateDisplay: String, time: String, hasTickets: Boolean): String {
+        val buttonText = if (hasTickets) "Купить билет" else "Оставить заявку"
+        val mobileText = if (hasTickets) "Билеты" else "Заявка"
+        return """
+            <div class="grid items-center gap-x-4 grid-cols-2">
+              <time datetime="$datetime">
+                <span class="lg:hidden">$dateDisplay</span>
+                <span class="hidden lg:inline">$dateDisplay</span>
+                <span aria-hidden="true"> ∙ </span>
+                <span>$time</span>
+              </time>
+              <div data-tickets="">
+                <a data-tickets-button="" href="javascript:;">
+                  <span data-tickets-desktop-button-text=""
+                        data-has-tickets-text="Купить билет"
+                        data-no-tickets-text="Оставить заявку">$buttonText</span>
+                  <span data-tickets-mobile-button-text=""
+                        data-has-tickets-text="Билеты"
+                        data-no-tickets-text="Заявка">$mobileText</span>
+                </a>
+              </div>
+            </div>
+        """.trimIndent()
+    }
 }

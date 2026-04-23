@@ -14,11 +14,7 @@ class MxtScraper : BaseWebScraper() {
     private val baseUrl = "https://mxat.ru"
     private val repertoireUrls = listOf("$baseUrl/repertuar/current/", "$baseUrl/repertuar/soon/")
     private val performanceLinkSelector = "a[href*=/repertuar/show/]"
-    private val ticketLinkSelector = "a[href]"
     private val sceneRegex = Regex("(Основная сцена|Малая сцена|Новая сцена|Дворец на Яузе|Театриум на Серпуховке|Портретное фойе)")
-    private val scheduleRegex = Regex(
-        "(\\d{1,2}\\s+[А-Яа-яЁё]+(?:,\\s*[А-Яа-яЁё]{2})?)(?:\\s+\\1)?(?:\\s*[∙·]\\s*|\\s+)?(\\d{1,2}:\\d{2})?"
-    )
 
     override fun scrapeRepertoire(): List<ScrapedPerformance> {
         val performances = mutableListOf<ScrapedPerformance>()
@@ -63,43 +59,31 @@ class MxtScraper : BaseWebScraper() {
 
     internal fun parseScheduleHtml(html: String): List<ScrapedSchedule> {
         val doc = Jsoup.parse(html)
-        val schedules = linkedMapOf<Pair<String, String>, ScrapedSchedule>()
+        val schedules = mutableListOf<ScrapedSchedule>()
 
-        doc.select(ticketLinkSelector)
-            .filter { isTicketLink(it) }
-            .forEach { ticketLink ->
-                val scheduleContainer = findScheduleContainer(ticketLink)
-                val context = scheduleContainer?.text()?.normalizeWhitespace().orEmpty()
-                if (context.isBlank()) return@forEach
+        doc.select("[data-tickets-button]").forEach { button ->
+            val container = button.parents().firstOrNull { it.selectFirst("time[datetime]") != null }
+                ?: return@forEach
+            val timeEl = container.selectFirst("time[datetime]") ?: return@forEach
 
-                val matches = scheduleRegex.findAll(context).toList()
-                if (matches.isEmpty()) return@forEach
+            val datetime = timeEl.attr("datetime") // "2026-05-14 19:00"
+            val timeStr = datetime.substringAfter(" ", "")
+            val dateStr = timeEl.select("span").firstOrNull { it.attr("aria-hidden") != "true" }
+                ?.text()?.trim() ?: datetime.substringBefore(" ")
 
-                matches.forEach matchesLoop@{ match ->
-                    val date = match.groupValues[1].normalizeWhitespace().trim()
-                    val time = match.groupValues.getOrNull(2)?.normalizeWhitespace()?.trim().orEmpty()
-                    if (date.isBlank()) return@matchesLoop
-                    val key = date to time
-                    schedules.putIfAbsent(
-                        key,
-                        ScrapedSchedule(
-                            date = date,
-                            time = time,
-                            ticketsAvailable = context.contains("Купить билет", ignoreCase = true)
-                        )
-                    )
-                }
-            }
+            val desktopSpan = button.selectFirst("[data-tickets-desktop-button-text]")
+            val ticketsAvailable = desktopSpan?.text()?.trim() == desktopSpan?.attr("data-has-tickets-text")
+
+            schedules.add(ScrapedSchedule(date = dateStr, time = timeStr, ticketsAvailable = ticketsAvailable))
+        }
 
         if (schedules.isEmpty()) {
-            val candidateCount = doc.select(ticketLinkSelector).count { isTicketLink(it) }
             log.warn(
-                "[mxt] Расписание не распознано. Найдено ссылок на билеты: $candidateCount. " +
+                "[mxt] Расписание не распознано. Найдено кнопок: ${doc.select("[data-tickets-button]").size}. " +
                     "Фрагмент HTML:\n${doc.body().html().take(1500)}"
             )
         }
-
-        return schedules.values.toList()
+        return schedules
     }
 
     internal fun parseRepertoireHtml(html: String): List<ScrapedPerformance> {
@@ -153,23 +137,6 @@ class MxtScraper : BaseWebScraper() {
             val headings = parent.select("h1, h2, h3, h4")
             headings.any { it.text().normalizeWhitespace().isNotBlank() } && parent.text().length <= 500
         }
-    }
-
-    private fun findScheduleContainer(link: Element): Element? {
-        return link.parents().firstOrNull { parent ->
-            val text = parent.text().normalizeWhitespace()
-            text.length in 10..250 &&
-                scheduleRegex.containsMatchIn(text) &&
-                text.contains("билет", ignoreCase = true)
-        }
-    }
-
-    private fun isTicketLink(link: Element): Boolean {
-        val text = link.text().normalizeWhitespace()
-        val href = link.attr("href")
-        return text.contains("Купить билет", ignoreCase = true) ||
-            text.equals("Билеты", ignoreCase = true) ||
-            href.contains("profticket", ignoreCase = true)
     }
 
     private fun fetchRepertoirePageUrls(indexUrl: String): List<String> {
