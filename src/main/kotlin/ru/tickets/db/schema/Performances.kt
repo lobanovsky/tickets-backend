@@ -10,6 +10,7 @@ object Performances : Table("performances") {
     val url = varchar("url", 1000)
     val scene = varchar("scene", 200).nullable()
     val isActive = bool("is_active").default(true)
+    val ticketsAvailable = bool("tickets_available").default(false)
 
     override val primaryKey = PrimaryKey(id)
 }

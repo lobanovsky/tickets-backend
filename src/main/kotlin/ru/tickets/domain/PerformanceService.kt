@@ -9,7 +9,7 @@ import ru.tickets.db.schema.Users
 import ru.tickets.models.responses.PerformanceWithStatusResponse
 import java.util.*
 
-data class PerformanceRow(val id: UUID, val theatreId: UUID, val title: String, val url: String, val scene: String?, val isActive: Boolean = true)
+data class PerformanceRow(val id: UUID, val theatreId: UUID, val title: String, val url: String, val scene: String?, val isActive: Boolean = true, val ticketsAvailable: Boolean = false)
 
 class PerformanceService(private val database: Database) {
 
@@ -55,9 +55,9 @@ class PerformanceService(private val database: Database) {
     suspend fun findWithActiveSubscribers(theatreId: UUID): List<PerformanceRow> = dbQuery(database) {
         Performances
             .join(Subscriptions, JoinType.INNER, Performances.id, Subscriptions.performanceId)
-            .select(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive)
+            .select(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive, Performances.ticketsAvailable)
             .where { (Performances.theatreId eq theatreId) and (Subscriptions.isActive eq true) and (Performances.isActive eq true) }
-            .groupBy(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive)
+            .groupBy(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive, Performances.ticketsAvailable)
             .map { row ->
                 PerformanceRow(
                     id = row[Performances.id],
@@ -65,9 +65,16 @@ class PerformanceService(private val database: Database) {
                     title = row[Performances.title],
                     url = row[Performances.url],
                     scene = row[Performances.scene],
-                    isActive = row[Performances.isActive]
+                    isActive = row[Performances.isActive],
+                    ticketsAvailable = row[Performances.ticketsAvailable]
                 )
             }
+    }
+
+    suspend fun updateTicketsAvailable(performanceId: UUID, available: Boolean) = dbQuery(database) {
+        Performances.update({ Performances.id eq performanceId }) {
+            it[ticketsAvailable] = available
+        }
     }
 
     fun upsertPerformances(theatreId: UUID, scraped: List<ScrapedPerformance>) {

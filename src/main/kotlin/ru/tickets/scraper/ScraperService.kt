@@ -67,11 +67,17 @@ class ScraperService(
                                         scraper.scrapeSchedule(perf.url)
                                     }
                                     val available = schedule.filter { it.ticketsAvailable }
+                                    val hasTickets = available.isNotEmpty()
                                     log.info(
                                         "[${scraper.theatreSlug}] Результат проверки: ${perf.title}, " +
                                         "слотов=${schedule.size}, доступных=${available.size}"
                                     )
-                                    if (available.isNotEmpty()) {
+
+                                    if (hasTickets != perf.ticketsAvailable) {
+                                        performanceService.updateTicketsAvailable(perf.id, hasTickets)
+                                    }
+
+                                    if (!perf.ticketsAvailable && hasTickets) {
                                         val summary = available.joinToString("\n") { s ->
                                             buildString {
                                                 append("• ${s.date}")
@@ -79,17 +85,15 @@ class ScraperService(
                                             }
                                         }
                                         val created = notificationService.createNotifications(perf.id, summary)
-                                        val pending = notificationService.getPendingForPerformance(perf.id)
-                                        val toSend = (created + pending).distinctBy { it.id }
-                                        log.info("[${scraper.theatreSlug}] Билеты найдены: ${perf.title}, к отправке: ${toSend.size} (новых: ${created.size}, повторных: ${pending.size - created.size})")
-                                        for (notif in toSend) {
-                                            if (webhookClient.push(notif)) {
-                                                notificationService.acknowledge(java.util.UUID.fromString(notif.id))
-                                                log.info("[${scraper.theatreSlug}] Вебхук отправлен: telegramId=${notif.telegramId}")
-                                            }
+                                        log.info("[${scraper.theatreSlug}] Билеты появились: ${perf.title}, создано уведомлений: ${created.size}")
+                                    }
+
+                                    val pending = notificationService.getPendingForPerformance(perf.id)
+                                    for (notif in pending) {
+                                        if (webhookClient.push(notif)) {
+                                            notificationService.acknowledge(java.util.UUID.fromString(notif.id))
+                                            log.info("[${scraper.theatreSlug}] Вебхук отправлен: telegramId=${notif.telegramId}")
                                         }
-                                    } else {
-                                        log.info("[${scraper.theatreSlug}] Билеты не найдены: ${perf.title}")
                                     }
                                 } catch (e: Exception) {
                                     log.error("[${scraper.theatreSlug}] Ошибка скрапинга ${perf.url}: ${e.message}")

@@ -30,6 +30,7 @@ fun Application.configureDatabases() {
         exec("CREATE UNIQUE INDEX IF NOT EXISTS subscriptions_user_perf_idx ON subscriptions (user_id, performance_id)")
         exec("UPDATE performances SET is_active = TRUE WHERE is_active IS NULL")
         exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_vip BOOLEAN NOT NULL DEFAULT FALSE")
+        exec("ALTER TABLE performances ADD COLUMN IF NOT EXISTS tickets_available BOOLEAN NOT NULL DEFAULT FALSE")
     }
 
     seedTheatres(database)
