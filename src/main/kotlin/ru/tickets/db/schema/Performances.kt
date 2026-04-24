@@ -11,6 +11,7 @@ object Performances : Table("performances") {
     val scene = varchar("scene", 200).nullable()
     val isActive = bool("is_active").default(true)
     val ticketsAvailable = bool("tickets_available").default(false)
+    val lastScheduleSummary = text("last_schedule_summary").nullable()
 
     override val primaryKey = PrimaryKey(id)
 }

@@ -17,8 +17,8 @@ fun Application.configureRouting() {
     val theatreService = TheatreService(database)
     val performanceService = PerformanceService(database)
     val userService = UserService(database)
-    val subscriptionService = SubscriptionService(database)
     val notificationService = NotificationService(database)
+    val subscriptionService = SubscriptionService(database, notificationService)
     val paidSubscriptionService = PaidSubscriptionService(database)
 
     val botTokens = listOf("vakhtangov", "ramt", "nations", "fomenki", "lensov", "mxt").mapNotNull { slug ->

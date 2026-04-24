@@ -82,6 +82,40 @@ class NotificationService(private val database: Database) {
         return created
     }
 
+    suspend fun createNotificationForUser(telegramId: Long, performanceId: UUID): Boolean = dbQuery(database) {
+        val perfRow = Performances
+            .join(Theatres, JoinType.INNER, Performances.theatreId, Theatres.id)
+            .selectAll().where { Performances.id eq performanceId }
+            .singleOrNull() ?: return@dbQuery false
+
+        val summary = perfRow[Performances.lastScheduleSummary] ?: return@dbQuery false
+
+        val userRow = Users.selectAll().where { Users.telegramId eq telegramId }.singleOrNull()
+            ?: return@dbQuery false
+        val userId = userRow[Users.id]
+
+        val today = LocalDate.now()
+        val hasActiveSub = PaidSubscriptions.selectAll()
+            .where { (PaidSubscriptions.userId eq userId) and (PaidSubscriptions.isActive eq true) and (PaidSubscriptions.endDate greaterEq today) }
+            .count() > 0
+        if (!hasActiveSub) return@dbQuery false
+
+        val alreadyPending = PendingNotifications.selectAll()
+            .where { (PendingNotifications.userId eq userId) and (PendingNotifications.performanceId eq performanceId) and PendingNotifications.sentAt.isNull() }
+            .count() > 0
+        if (alreadyPending) return@dbQuery false
+
+        PendingNotifications.insert {
+            it[PendingNotifications.userId] = userId
+            it[PendingNotifications.performanceId] = performanceId
+            it[PendingNotifications.scheduleSummary] = summary
+        }
+        Subscriptions.update({ (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId) }) {
+            with(SqlExpressionBuilder) { it[Subscriptions.notificationCount] = Subscriptions.notificationCount + 1 }
+        }
+        true
+    }
+
     suspend fun getPendingForPerformance(performanceId: UUID): List<PendingNotificationResponse> = dbQuery(database) {
         PendingNotifications
             .join(Users, JoinType.INNER, PendingNotifications.userId, Users.id)

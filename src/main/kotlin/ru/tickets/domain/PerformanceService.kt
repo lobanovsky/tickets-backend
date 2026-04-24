@@ -71,9 +71,10 @@ class PerformanceService(private val database: Database) {
             }
     }
 
-    suspend fun updateTicketsAvailable(performanceId: UUID, available: Boolean) = dbQuery(database) {
+    suspend fun updateTicketsAvailable(performanceId: UUID, available: Boolean, summary: String? = null) = dbQuery(database) {
         Performances.update({ Performances.id eq performanceId }) {
             it[ticketsAvailable] = available
+            if (summary != null) it[lastScheduleSummary] = summary
         }
     }
 

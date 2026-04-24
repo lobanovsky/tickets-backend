@@ -73,10 +73,6 @@ class ScraperService(
                                         "слотов=${schedule.size}, доступных=${available.size}"
                                     )
 
-                                    if (hasTickets != perf.ticketsAvailable) {
-                                        performanceService.updateTicketsAvailable(perf.id, hasTickets)
-                                    }
-
                                     if (!perf.ticketsAvailable && hasTickets) {
                                         val summary = available.joinToString("\n") { s ->
                                             buildString {
@@ -84,8 +80,11 @@ class ScraperService(
                                                 if (s.time.isNotBlank()) append(" ${s.time}")
                                             }
                                         }
+                                        performanceService.updateTicketsAvailable(perf.id, true, summary)
                                         val created = notificationService.createNotifications(perf.id, summary)
                                         log.info("[${scraper.theatreSlug}] Билеты появились: ${perf.title}, создано уведомлений: ${created.size}")
+                                    } else if (perf.ticketsAvailable && !hasTickets) {
+                                        performanceService.updateTicketsAvailable(perf.id, false)
                                     }
 
                                     val pending = notificationService.getPendingForPerformance(perf.id)

@@ -10,39 +10,47 @@ import ru.tickets.models.NotFoundException
 import ru.tickets.models.responses.*
 import java.util.*
 
-class SubscriptionService(private val database: Database) {
+class SubscriptionService(private val database: Database, private val notificationService: NotificationService) {
 
     private val log = LoggerFactory.getLogger(SubscriptionService::class.java)
 
-    suspend fun subscribe(telegramId: Long, performanceId: UUID) = dbQuery(database) {
-        val userRow = Users.selectAll().where { Users.telegramId eq telegramId }.singleOrNull()
-            ?: throw NotFoundException("User not found")
-        val userId = userRow[Users.id]
+    suspend fun subscribe(telegramId: Long, performanceId: UUID) {
+        val ticketsAvailable = dbQuery(database) {
+            val userRow = Users.selectAll().where { Users.telegramId eq telegramId }.singleOrNull()
+                ?: throw NotFoundException("User not found")
+            val userId = userRow[Users.id]
 
-        val performanceRow = Performances.selectAll().where { Performances.id eq performanceId }.singleOrNull()
-            ?: throw NotFoundException("Performance not found")
-        val performanceTitle = performanceRow[Performances.title]
+            val performanceRow = Performances.selectAll().where { Performances.id eq performanceId }.singleOrNull()
+                ?: throw NotFoundException("Performance not found")
+            val performanceTitle = performanceRow[Performances.title]
 
-        val existing = Subscriptions.selectAll()
-            .where { (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId) }
-            .singleOrNull()
+            val existing = Subscriptions.selectAll()
+                .where { (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId) }
+                .singleOrNull()
 
-        if (existing == null) {
-            Subscriptions.insert {
-                it[Subscriptions.userId] = userId
-                it[Subscriptions.performanceId] = performanceId
-                it[isActive] = true
+            if (existing == null) {
+                Subscriptions.insert {
+                    it[Subscriptions.userId] = userId
+                    it[Subscriptions.performanceId] = performanceId
+                    it[isActive] = true
+                }
+            } else {
+                Subscriptions.update({
+                    (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId)
+                }) {
+                    it[isActive] = true
+                }
             }
-        } else {
-            Subscriptions.update({
-                (Subscriptions.userId eq userId) and (Subscriptions.performanceId eq performanceId)
-            }) {
-                it[isActive] = true
-            }
+
+            val userName = userRow[Users.username]?.let { "@$it" } ?: userRow[Users.firstName]
+            log.info("Подписка: $userName (telegramId=$telegramId), спектакль=\"$performanceTitle\" ($performanceId)")
+
+            performanceRow[Performances.ticketsAvailable]
         }
 
-        val userName = userRow[Users.username]?.let { "@$it" } ?: userRow[Users.firstName]
-        log.info("Подписка: $userName (telegramId=$telegramId), спектакль=\"$performanceTitle\" ($performanceId)")
+        if (ticketsAvailable) {
+            notificationService.createNotificationForUser(telegramId, performanceId)
+        }
     }
 
     suspend fun unsubscribe(telegramId: Long, performanceId: UUID) = dbQuery(database) {
