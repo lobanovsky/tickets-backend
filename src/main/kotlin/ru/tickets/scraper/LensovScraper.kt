@@ -32,16 +32,16 @@ class LensovScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
-        try {
-            val html = fetchHtmlWithPlaywright(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return emptyList()
+    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
+        return try {
+            val html = fetchHtmlWithPlaywright(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return null
             val schedules = parseScheduleHtml(html)
             if (schedules.isEmpty()) log.warn("[lensov] Расписание не найдено для $performanceUrl")
-            return schedules
+            schedules
         } catch (e: Exception) {
             log.error("[lensov] Ошибка при парсинге расписания $performanceUrl: ${e.message}")
+            null
         }
-        return emptyList()
     }
 
     internal fun parseScheduleHtml(html: String): List<ScrapedSchedule> {

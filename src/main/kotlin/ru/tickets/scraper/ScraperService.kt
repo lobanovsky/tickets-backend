@@ -66,6 +66,10 @@ class ScraperService(
                                     val schedule = withContext(Dispatchers.IO) {
                                         scraper.scrapeSchedule(perf.url)
                                     }
+                                    if (schedule == null) {
+                                        log.warn("[${scraper.theatreSlug}] Скрапинг не удался, пропускаем обновление состояния: ${perf.title}")
+                                        return@async
+                                    }
                                     val available = schedule.filter { it.ticketsAvailable }
                                     val hasTickets = available.isNotEmpty()
                                     log.info(

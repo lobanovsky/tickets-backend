@@ -25,10 +25,10 @@ class RamtScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
+    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
         val schedules = mutableListOf<ScrapedSchedule>()
-        try {
-            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return schedules
+        return try {
+            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return null
             val doc = Jsoup.parse(html)
             for (item in doc.select(".afisha-list__item")) {
                 val date = item.selectFirst(".afisha-card__date")?.text()?.trim() ?: continue
@@ -36,9 +36,10 @@ class RamtScraper : BaseWebScraper() {
                 val ticketsAvailable = item.selectFirst(".afisha-card__tickets-mobile a:contains(Билеты)") != null
                 schedules.add(ScrapedSchedule(date = date, time = time, ticketsAvailable = ticketsAvailable))
             }
+            schedules
         } catch (e: Exception) {
             log.warn("[ramt] Ошибка при парсинге расписания $performanceUrl: ${e.message}")
+            null
         }
-        return schedules
     }
 }

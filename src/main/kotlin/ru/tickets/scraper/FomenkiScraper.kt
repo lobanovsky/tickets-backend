@@ -44,22 +44,20 @@ class FomenkiScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
-        val schedules = mutableListOf<ScrapedSchedule>()
-        try {
-            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return schedules
+    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
+        return try {
+            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return null
             val doc = Jsoup.parse(html)
-            for (block in doc.select("div.event")) {
-                val dateText = block.selectFirst("p.date")?.text()?.trim() ?: continue
+            val schedules = doc.select("div.event").mapNotNull { block ->
+                val dateText = block.selectFirst("p.date")?.text()?.trim() ?: return@mapNotNull null
                 val ticketsAvailable = block.select("a[title=Купить билет], a[href*=/boxoffice/]").isNotEmpty()
-                schedules.add(ScrapedSchedule(date = dateText, time = "", ticketsAvailable = ticketsAvailable))
+                ScrapedSchedule(date = dateText, time = "", ticketsAvailable = ticketsAvailable)
             }
-            if (schedules.isEmpty()) {
-                log.warn("[fomenki] Расписание не найдено для $performanceUrl")
-            }
+            if (schedules.isEmpty()) log.warn("[fomenki] Расписание не найдено для $performanceUrl")
+            schedules
         } catch (e: Exception) {
             log.error("[fomenki] Ошибка при парсинге расписания $performanceUrl: ${e.message}")
+            null
         }
-        return schedules
     }
 }

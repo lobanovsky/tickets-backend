@@ -33,10 +33,10 @@ class VakhtangovScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
+    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
         val schedules = mutableListOf<ScrapedSchedule>()
-        try {
-            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return schedules
+        return try {
+            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return null
             val doc = Jsoup.parse(html)
             for (li in doc.select("ul.show-afisha > li")) {
                 val dateElem = li.selectFirst("span.date > span.date")
@@ -50,9 +50,10 @@ class VakhtangovScraper : BaseWebScraper() {
                     schedules.add(ScrapedSchedule(date = date, time = time, ticketsAvailable = ticketsAvailable))
                 }
             }
+            schedules
         } catch (e: Exception) {
             log.warn("[vakhtangov] Ошибка при парсинге расписания $performanceUrl: ${e.message}")
+            null
         }
-        return schedules
     }
 }

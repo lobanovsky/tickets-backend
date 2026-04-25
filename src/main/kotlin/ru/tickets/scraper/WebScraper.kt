@@ -11,5 +11,5 @@ data class ScrapedSchedule(
 interface WebScraper {
     val theatreSlug: String
     fun scrapeRepertoire(): List<ScrapedPerformance>
-    fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>
+    fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>?
 }

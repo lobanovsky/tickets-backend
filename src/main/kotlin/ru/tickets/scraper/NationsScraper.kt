@@ -28,26 +28,25 @@ class NationsScraper : BaseWebScraper() {
         return performances
     }
 
-    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
-        val schedules = mutableListOf<ScrapedSchedule>()
-        try {
-            val html = fetchHtmlWithPlaywright(performanceUrl, waitForSelector = ".play-info__meta-item") ?: return schedules
+    override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
+        return try {
+            val html = fetchHtmlWithPlaywright(performanceUrl, waitForSelector = ".play-info__meta-item") ?: return null
             val doc = Jsoup.parse(html)
-            for (item in doc.select(".play-info__meta-item")) {
+            doc.select(".play-info__meta-item").mapNotNull { item ->
                 val spans = item.select("span")
-                if (spans.size < 2) continue
+                if (spans.size < 2) return@mapNotNull null
                 val dateTimeText = spans[0].text().trim()
                 val parts = dateTimeText.split(" - ")
-                if (parts.size != 2) continue
+                if (parts.size != 2) return@mapNotNull null
                 val date = parts[0].trim()
                 val time = parts[1].trim()
                 val ticketsAvailable = item.select("a.btn")
                     .any { it.text().contains("Купить билет", ignoreCase = true) }
-                schedules.add(ScrapedSchedule(date = date, time = time, ticketsAvailable = ticketsAvailable))
+                ScrapedSchedule(date = date, time = time, ticketsAvailable = ticketsAvailable)
             }
         } catch (e: Exception) {
             log.warn("[nations] Ошибка при парсинге расписания $performanceUrl: ${e.message}")
+            null
         }
-        return schedules
     }
 }
