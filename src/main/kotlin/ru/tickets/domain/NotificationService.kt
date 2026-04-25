@@ -9,12 +9,15 @@ import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Theatres
 import ru.tickets.db.schema.Users
 import java.time.LocalDate
+import org.slf4j.LoggerFactory
 import ru.tickets.models.NotFoundException
 import ru.tickets.models.responses.PendingNotificationResponse
 import java.time.LocalDateTime
 import java.util.*
 
 class NotificationService(private val database: Database) {
+
+    private val log = LoggerFactory.getLogger(NotificationService::class.java)
 
     fun createNotifications(performanceId: UUID, scheduleSummary: String): List<PendingNotificationResponse> {
         val created = mutableListOf<PendingNotificationResponse>()
@@ -88,7 +91,10 @@ class NotificationService(private val database: Database) {
             .selectAll().where { Performances.id eq performanceId }
             .singleOrNull() ?: return@dbQuery false
 
-        val summary = perfRow[Performances.lastScheduleSummary] ?: return@dbQuery false
+        val summary = perfRow[Performances.lastScheduleSummary] ?: run {
+            log.warn("createNotificationForUser: tickets_available=true but last_schedule_summary is null for performanceId=$performanceId")
+            return@dbQuery false
+        }
 
         val userRow = Users.selectAll().where { Users.telegramId eq telegramId }.singleOrNull()
             ?: return@dbQuery false
