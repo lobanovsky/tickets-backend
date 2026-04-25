@@ -3,6 +3,7 @@ package ru.tickets.scraper
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
+import com.microsoft.playwright.options.WaitForSelectorState
 import com.microsoft.playwright.options.WaitUntilState
 
 abstract class BaseWebScraper : WebScraper {
@@ -24,7 +25,9 @@ abstract class BaseWebScraper : WebScraper {
                     .setWaitUntil(waitUntil)
                     .setTimeout(60_000.0))
                 if (waitForSelector != null) {
-                    page.waitForSelector(waitForSelector, Page.WaitForSelectorOptions().setTimeout(15_000.0))
+                    page.waitForSelector(waitForSelector, Page.WaitForSelectorOptions()
+                        .setState(WaitForSelectorState.ATTACHED)
+                        .setTimeout(15_000.0))
                 }
                 return page.content()
             }
