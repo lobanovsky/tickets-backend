@@ -1,6 +1,8 @@
 package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.isNotNull
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.tickets.db.schema.PaidSubscriptions
 import ru.tickets.db.schema.PendingNotifications
@@ -163,6 +165,12 @@ class NotificationService(private val database: Database) {
                     createdAt = row[PendingNotifications.createdAt].toString()
                 )
             }
+    }
+
+    suspend fun deleteOldSent(): Int = dbQuery(database) {
+        PendingNotifications.deleteWhere {
+            (sentAt.isNotNull()) and (createdAt less LocalDateTime.now().minusDays(1))
+        }
     }
 
     suspend fun acknowledge(notificationId: UUID) = dbQuery(database) {

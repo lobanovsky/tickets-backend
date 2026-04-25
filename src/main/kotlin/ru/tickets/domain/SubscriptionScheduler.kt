@@ -12,7 +12,8 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class SubscriptionScheduler(
     private val paidSubscriptionService: PaidSubscriptionService,
-    private val telegramSenderService: TelegramSenderService
+    private val telegramSenderService: TelegramSenderService,
+    private val notificationService: NotificationService
 ) {
     private val log = LoggerFactory.getLogger(SubscriptionScheduler::class.java)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -20,6 +21,7 @@ class SubscriptionScheduler(
     fun start() {
         scope.launch { runDeactivationLoop() }
         scope.launch { runExpiringWarningLoop() }
+        scope.launch { runNotificationCleanupLoop() }
         log.info("SubscriptionScheduler started")
     }
 
@@ -78,6 +80,19 @@ class SubscriptionScheduler(
                 log.error("Ошибка при отправке уведомлений об истечении подписок: ${e.message}")
             }
             delay(millisUntilNextTime(20, 0).milliseconds)
+        }
+    }
+
+    private suspend fun runNotificationCleanupLoop() {
+        delay(millisUntilNextTime(3, 0).milliseconds)
+        while (true) {
+            try {
+                val deleted = notificationService.deleteOldSent()
+                if (deleted > 0) log.info("Очищено устаревших уведомлений: $deleted")
+            } catch (e: Exception) {
+                log.error("Ошибка при очистке уведомлений: ${e.message}")
+            }
+            delay(millisUntilNextTime(3, 0).milliseconds)
         }
     }
 
