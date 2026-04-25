@@ -9,7 +9,8 @@ abstract class BaseWebScraper : WebScraper {
 
     protected fun fetchHtmlWithSelenium(
         url: String,
-        waitUntil: WaitUntilState = WaitUntilState.DOMCONTENTLOADED
+        waitUntil: WaitUntilState = WaitUntilState.DOMCONTENTLOADED,
+        waitForSelector: String? = null
     ): String? {
         Playwright.create().use { playwright ->
             val browser = playwright.chromium().launch(
@@ -22,6 +23,9 @@ abstract class BaseWebScraper : WebScraper {
                 page.navigate(url, Page.NavigateOptions()
                     .setWaitUntil(waitUntil)
                     .setTimeout(60_000.0))
+                if (waitForSelector != null) {
+                    page.waitForSelector(waitForSelector, Page.WaitForSelectorOptions().setTimeout(15_000.0))
+                }
                 return page.content()
             }
         }
