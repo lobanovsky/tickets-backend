@@ -25,9 +25,13 @@ abstract class BaseWebScraper : WebScraper {
                     .setWaitUntil(waitUntil)
                     .setTimeout(60_000.0))
                 if (waitForSelector != null) {
-                    page.waitForSelector(waitForSelector, Page.WaitForSelectorOptions()
-                        .setState(WaitForSelectorState.ATTACHED)
-                        .setTimeout(15_000.0))
+                    try {
+                        page.waitForSelector(waitForSelector, Page.WaitForSelectorOptions()
+                            .setState(WaitForSelectorState.ATTACHED)
+                            .setTimeout(15_000.0))
+                    } catch (_: Exception) {
+                        // element not present on this page — return content as-is (0 slots)
+                    }
                 }
                 return page.content()
             }
