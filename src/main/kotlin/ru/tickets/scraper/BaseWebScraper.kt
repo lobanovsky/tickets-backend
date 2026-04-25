@@ -7,7 +7,7 @@ import com.microsoft.playwright.options.WaitUntilState
 
 abstract class BaseWebScraper : WebScraper {
 
-    protected fun fetchHtmlWithSelenium(
+    protected fun fetchHtmlWithPlaywright(
         url: String,
         waitUntil: WaitUntilState = WaitUntilState.DOMCONTENTLOADED,
         waitForSelector: String? = null

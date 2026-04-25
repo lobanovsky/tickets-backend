@@ -28,7 +28,7 @@ class RamtScraper : BaseWebScraper() {
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
         val schedules = mutableListOf<ScrapedSchedule>()
         try {
-            val html = fetchHtmlWithSelenium(performanceUrl) ?: return schedules
+            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return schedules
             val doc = Jsoup.parse(html)
             for (item in doc.select(".afisha-list__item")) {
                 val date = item.selectFirst(".afisha-card__date")?.text()?.trim() ?: continue

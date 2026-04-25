@@ -31,7 +31,7 @@ class NationsScraper : BaseWebScraper() {
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
         val schedules = mutableListOf<ScrapedSchedule>()
         try {
-            val html = fetchHtmlWithSelenium(performanceUrl, waitForSelector = ".play-info__meta-item") ?: return schedules
+            val html = fetchHtmlWithPlaywright(performanceUrl, waitForSelector = ".play-info__meta-item") ?: return schedules
             val doc = Jsoup.parse(html)
             for (item in doc.select(".play-info__meta-item")) {
                 val spans = item.select("span")

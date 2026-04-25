@@ -47,7 +47,7 @@ class MxtScraper : BaseWebScraper() {
 
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
         try {
-            val html = fetchHtmlWithSelenium(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return emptyList()
+            val html = fetchHtmlWithPlaywright(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return emptyList()
             val schedules = parseScheduleHtml(html)
             if (schedules.isEmpty()) log.warn("[mxt] Расписание не найдено для $performanceUrl")
             return schedules

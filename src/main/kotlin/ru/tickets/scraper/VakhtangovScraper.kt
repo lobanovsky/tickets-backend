@@ -36,7 +36,7 @@ class VakhtangovScraper : BaseWebScraper() {
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule> {
         val schedules = mutableListOf<ScrapedSchedule>()
         try {
-            val html = fetchHtmlWithSelenium(performanceUrl) ?: return schedules
+            val html = fetchHtmlWithPlaywright(performanceUrl) ?: return schedules
             val doc = Jsoup.parse(html)
             for (li in doc.select("ul.show-afisha > li")) {
                 val dateElem = li.selectFirst("span.date > span.date")
