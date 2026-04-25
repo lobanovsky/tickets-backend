@@ -2,11 +2,13 @@ package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import ru.tickets.db.schema.PaidSubscriptions
 import ru.tickets.db.schema.Performances
 import ru.tickets.db.schema.Subscriptions
 import ru.tickets.db.schema.Theatres
 import ru.tickets.db.schema.Users
 import ru.tickets.models.responses.PerformanceWithStatusResponse
+import java.time.LocalDate
 import java.util.*
 
 data class PerformanceRow(val id: UUID, val theatreId: UUID, val title: String, val url: String, val scene: String?, val isActive: Boolean = true, val ticketsAvailable: Boolean = false)
@@ -53,10 +55,21 @@ class PerformanceService(private val database: Database) {
     }
 
     suspend fun findWithActiveSubscribers(theatreId: UUID): List<PerformanceRow> = dbQuery(database) {
+        val today = LocalDate.now()
         Performances
             .join(Subscriptions, JoinType.INNER, Performances.id, Subscriptions.performanceId)
             .select(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive, Performances.ticketsAvailable)
-            .where { (Performances.theatreId eq theatreId) and (Subscriptions.isActive eq true) and (Performances.isActive eq true) }
+            .where {
+                (Performances.theatreId eq theatreId) and
+                (Subscriptions.isActive eq true) and
+                (Performances.isActive eq true) and
+                (Subscriptions.userId inSubQuery PaidSubscriptions
+                    .select(PaidSubscriptions.userId)
+                    .where {
+                        (PaidSubscriptions.isActive eq true) and
+                        (PaidSubscriptions.endDate greaterEq today)
+                    })
+            }
             .groupBy(Performances.id, Performances.theatreId, Performances.title, Performances.url, Performances.scene, Performances.isActive, Performances.ticketsAvailable)
             .map { row ->
                 PerformanceRow(
