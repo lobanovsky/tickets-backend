@@ -10,18 +10,22 @@ class RamtScraper : BaseWebScraper() {
     private val log = LoggerFactory.getLogger(RamtScraper::class.java)
 
     override fun scrapeRepertoire(): List<ScrapedPerformance> {
+        val seen = mutableSetOf<String>()
         val performances = mutableListOf<ScrapedPerformance>()
-        try {
-            val doc = Jsoup.connect("https://ramt.ru/plays/repertuar/").get()
-            for (card in doc.select(".performances-card")) {
-                val title = card.selectFirst(".performances-card__title")?.text()?.trim() ?: continue
-                val url = card.attr("abs:href").trim()
-                if (url.isNotBlank()) performances.add(ScrapedPerformance(title = title, url = url))
+        val urls = listOf("https://ramt.ru/plays/repertuar/", "https://ramt.ru/plays/skoro/")
+        for (pageUrl in urls) {
+            try {
+                val doc = Jsoup.connect(pageUrl).get()
+                for (card in doc.select(".performances-card")) {
+                    val title = card.selectFirst(".performances-card__title")?.text()?.trim() ?: continue
+                    val url = card.attr("abs:href").trim()
+                    if (url.isNotBlank() && seen.add(url)) performances.add(ScrapedPerformance(title = title, url = url))
+                }
+            } catch (e: Exception) {
+                log.error("[ramt] Ошибка при парсинге $pageUrl: ${e.message}")
             }
-            log.info("[ramt] Найдено ${performances.size} спектаклей")
-        } catch (e: Exception) {
-            log.error("[ramt] Ошибка при парсинге репертуара: ${e.message}")
         }
+        log.info("[ramt] Найдено ${performances.size} спектаклей")
         return performances
     }
 
