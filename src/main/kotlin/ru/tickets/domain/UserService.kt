@@ -14,8 +14,14 @@ import java.time.LocalDateTime
 
 class UserService(private val database: Database) {
 
-    suspend fun findAll(hasSubscriptions: Boolean? = null): List<UserResponse> = dbQuery(database) {
-        val query = when (hasSubscriptions) {
+    suspend fun findAll(hasSubscriptions: Boolean? = null, hasPaidSubscription: Boolean? = null): List<UserResponse> = dbQuery(database) {
+        val today = LocalDate.now()
+        val activePaidSubQuery = PaidSubscriptions
+            .select(PaidSubscriptions.userId)
+            .where { (PaidSubscriptions.isActive eq true) and (PaidSubscriptions.endDate greaterEq today) }
+            .withDistinct()
+
+        var query = when (hasSubscriptions) {
             true -> Users.selectAll().where {
                 Users.id inSubQuery Subscriptions
                     .select(Subscriptions.userId)
@@ -32,13 +38,14 @@ class UserService(private val database: Database) {
 
             null -> Users.selectAll()
         }
-        val today = LocalDate.now()
+
+        query = when (hasPaidSubscription) {
+            true -> query.andWhere { Users.id inSubQuery activePaidSubQuery }
+            false -> query.andWhere { Users.id notInSubQuery activePaidSubQuery }
+            null -> query
+        }
         val paidUserIds = PaidSubscriptions.selectAll()
-            .where { PaidSubscriptions.isActive eq true }
-            .filter {
-                !it[PaidSubscriptions.startDate].isAfter(today) &&
-                        !it[PaidSubscriptions.endDate].isBefore(today)
-            }
+            .where { (PaidSubscriptions.isActive eq true) and (PaidSubscriptions.endDate greaterEq today) }
             .map { it[PaidSubscriptions.userId] }
             .toSet()
 

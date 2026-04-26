@@ -48,7 +48,8 @@ fun Route.userRoutes(userService: UserService, subscriptionService: Subscription
             val principal = call.principal<BotPrincipal>()!!
             if (!principal.isAdmin) return@get call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", "Forbidden"))
             val hasSubscriptions = call.request.queryParameters["hasSubscriptions"]?.toBooleanStrictOrNull()
-            call.respond(userService.findAll(hasSubscriptions))
+            val hasPaidSubscription = call.request.queryParameters["hasPaidSubscription"]?.toBooleanStrictOrNull()
+            call.respond(userService.findAll(hasSubscriptions, hasPaidSubscription))
         }
     }
 }
