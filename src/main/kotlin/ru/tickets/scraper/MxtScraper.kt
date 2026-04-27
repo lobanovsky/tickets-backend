@@ -6,6 +6,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.slf4j.LoggerFactory
 import ru.tickets.domain.ScrapedPerformance
+import java.time.LocalDate
 
 class MxtScraper : BaseWebScraper() {
 
@@ -67,6 +68,8 @@ class MxtScraper : BaseWebScraper() {
             val timeEl = container.selectFirst("time[datetime]") ?: return@forEach
 
             val datetime = timeEl.attr("datetime") // "2026-05-14 19:00"
+            val eventDate = runCatching { LocalDate.parse(datetime.substringBefore(" ")) }.getOrNull()
+            if (eventDate != null && eventDate.isBefore(LocalDate.now())) return@forEach
             val timeStr = datetime.substringAfter(" ", "")
             val dateStr = timeEl.select("span").firstOrNull { it.attr("aria-hidden") != "true" }
                 ?.text()?.trim() ?: datetime.substringBefore(" ")
