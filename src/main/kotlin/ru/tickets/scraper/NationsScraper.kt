@@ -43,7 +43,7 @@ class NationsScraper : BaseWebScraper() {
                 val ticketsAvailable = item.select("a.btn")
                     .any { it.text().contains("Купить билет", ignoreCase = true) }
                 ScrapedSchedule(date = date, time = time, ticketsAvailable = ticketsAvailable)
-            }
+            }.distinctBy { it.date + it.time }
         } catch (e: Exception) {
             log.warn("[nations] Ошибка при парсинге расписания $performanceUrl: ${e.message}")
             null
