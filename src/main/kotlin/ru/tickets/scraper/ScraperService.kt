@@ -79,7 +79,7 @@ class ScraperService(
 
                                     if (hasTickets) {
                                         val summary = available.joinToString("\n") { s ->
-                                            buildString {
+                                            s.details ?: buildString {
                                                 append("• ${s.date}")
                                                 if (s.time.isNotBlank()) append(" ${s.time}")
                                             }
