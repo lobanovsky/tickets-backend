@@ -5,8 +5,7 @@ import ru.tickets.domain.ScrapedPerformance
 data class ScrapedSchedule(
     val date: String,
     val time: String,
-    val ticketsAvailable: Boolean,
-    val details: String? = null
+    val ticketsAvailable: Boolean
 )
 
 interface WebScraper {
