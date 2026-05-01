@@ -87,7 +87,7 @@ class UserService(private val database: Database) {
             PaidSubscriptions.insert {
                 it[userId] = id
                 it[startDate] = today
-                it[endDate] = today.plusDays(7)
+                it[endDate] = today.plusDays(2)
                 it[amountPaid] = 0
                 it[comment] = "Пробный период"
                 it[createdBy] = "system"
