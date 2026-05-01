@@ -47,7 +47,7 @@ fun Route.paidSubscriptionRoutes(paidSubscriptionService: PaidSubscriptionServic
             val today = LocalDate.now()
             val req = CreatePaidSubscriptionRequest(
                 startDate = today.toString(),
-                endDate = today.plusDays(7).toString(),
+                endDate = today.plusDays(2).toString(),
                 amountPaid = 0,
                 comment = "Пробный период"
             )
