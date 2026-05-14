@@ -37,7 +37,7 @@ class SatirikonScraper : BaseWebScraper() {
 
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
         return try {
-            val html = fetchHtmlWithPlaywright(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return null
+            val html = fetchHtmlWithPlaywright(performanceUrl, WaitUntilState.LOAD) ?: return null
             val schedules = parseScheduleHtml(html)
             if (schedules.isEmpty()) log.warn("[satirikon] Расписание не найдено для $performanceUrl")
             schedules
