@@ -18,20 +18,22 @@ class SatirikonScraper : BaseWebScraper() {
         val performances = mutableListOf<ScrapedPerformance>()
         val seen = mutableSetOf<String>()
         try {
-            val pageUrls = fetchRepertoirePageUrls()
-            log.info("[satirikon] Найдено ${pageUrls.size} страниц репертуара")
-            for (pageUrl in pageUrls) {
-                val html = Jsoup.connect(pageUrl)
+            var page = 1
+            while (page <= MAX_PAGES) {
+                val url = if (page == 1) repertoireUrl else "$repertoireUrl?PAGEN_1=$page"
+                val html = Jsoup.connect(url)
                     .userAgent("Mozilla/5.0 (compatible; bot)")
                     .get().outerHtml()
-                parseRepertoireHtml(html).forEach { p ->
-                    if (seen.add(p.url)) performances.add(p)
-                }
+                val found = parseRepertoireHtml(html)
+                if (found.isEmpty()) break
+                found.forEach { p -> if (seen.add(p.url)) performances.add(p) }
+                log.info("[satirikon] Страница $page: найдено ${found.size} спектаклей")
+                page++
             }
         } catch (e: Exception) {
             log.error("[satirikon] Ошибка при парсинге репертуара: ${e.message}")
         }
-        log.info("[satirikon] Найдено ${performances.size} спектаклей")
+        log.info("[satirikon] Итого найдено ${performances.size} спектаклей")
         return performances
     }
 
@@ -85,14 +87,7 @@ class SatirikonScraper : BaseWebScraper() {
         return schedules
     }
 
-    private fun fetchRepertoirePageUrls(): List<String> {
-        val doc = Jsoup.connect(repertoireUrl)
-            .userAgent("Mozilla/5.0 (compatible; bot)")
-            .get()
-        val extraPages = doc.select("a[href*=PAGEN_1]").mapNotNull { a ->
-            val href = a.attr("href").trim()
-            if (href.isBlank()) null else "$baseUrl/spektakli/repertuar/$href"
-        }.distinct()
-        return listOf(repertoireUrl) + extraPages
+    companion object {
+        private const val MAX_PAGES = 20
     }
 }

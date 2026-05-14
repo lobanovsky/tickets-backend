@@ -60,6 +60,17 @@ class SatirikonScraperTest {
         assertTrue(scraper.parseRepertoireHtml(html).isEmpty())
     }
 
+    @Test
+    fun parseRepertoireHtml_returnsEmptyWhenOnlyPaginationLinksPresent() {
+        // Страница с PAGEN_1 ссылками, но без h3>a спектаклей — сигнал "стоп" для цикла
+        val html = """
+            <html><body>
+              <nav><a href="?PAGEN_1=2">2</a><a href="?PAGEN_1=3">3</a></nav>
+            </body></html>
+        """.trimIndent()
+        assertTrue(scraper.parseRepertoireHtml(html).isEmpty())
+    }
+
     // --- parseScheduleHtml ---
 
     private fun scheduleHtml(vararg items: String) = """
