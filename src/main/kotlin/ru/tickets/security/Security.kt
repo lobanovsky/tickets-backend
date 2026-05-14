@@ -13,6 +13,7 @@ fun Application.configureSecurity() {
         environment.config.property("api-keys.fomenki").getString() to BotPrincipal("fomenki", false),
         environment.config.property("api-keys.lensov").getString() to BotPrincipal("lensov", false),
         environment.config.property("api-keys.mxt").getString() to BotPrincipal("mxt", false),
+        environment.config.property("api-keys.satirikon").getString() to BotPrincipal("satirikon", false),
         environment.config.property("api-keys.admin").getString() to BotPrincipal("admin", true),
     )
 

@@ -29,6 +29,9 @@ bot-webhooks:
   mxt:
     url: ${BOT_WEBHOOK_URL_MXT:}
     secret: ${BOT_WEBHOOK_SECRET_MXT:}
+  satirikon:
+    url: ${BOT_WEBHOOK_URL_SATIRIKON:}
+    secret: ${BOT_WEBHOOK_SECRET_SATIRIKON:}
 
 bot-tokens:
   vakhtangov: ${BOT_TOKEN_VAKHTANGOV:}
@@ -37,6 +40,7 @@ bot-tokens:
   fomenki: ${BOT_TOKEN_FOMENKI:}
   lensov: ${BOT_TOKEN_LENSOV:}
   mxt: ${BOT_TOKEN_MXT:}
+  satirikon: ${BOT_TOKEN_SATIRIKON:}
 
 telegram-api:
   url: ${TELEGRAM_API_URL:http://localhost:8080}
@@ -49,4 +53,5 @@ api-keys:
   fomenki: ${FOMENKI_API_KEY:fomenki-secret}
   lensov: ${LENSOV_API_KEY:lensov-secret}
   mxt: ${MXT_API_KEY:mxt-secret}
+  satirikon: ${SATIRIKON_API_KEY:satirikon-secret}
   admin: ${ADMIN_API_KEY:admin-secret}

@@ -70,6 +70,7 @@ jobs:
           echo "FOMENKI_API_KEY=${{ secrets.FOMENKI_API_KEY }}" >> .env
           echo "LENSOV_API_KEY=${{ secrets.LENSOV_API_KEY }}" >> .env          
           echo "MXT_API_KEY=${{ secrets.MXT_API_KEY }}" >> .env          
+          echo "SATIRIKON_API_KEY=${{ secrets.SATIRIKON_API_KEY }}" >> .env          
           
           echo "BOT_TOKEN_VAKHTANGOV=${{ secrets.BOT_TOKEN_VAKHTANGOV }}" >> .env
           echo "BOT_TOKEN_RAMT=${{ secrets.BOT_TOKEN_RAMT }}" >> .env
@@ -77,6 +78,7 @@ jobs:
           echo "BOT_TOKEN_FOMENKI=${{ secrets.BOT_TOKEN_FOMENKI }}" >> .env
           echo "BOT_TOKEN_LENSOV=${{ secrets.BOT_TOKEN_LENSOV }}" >> .env
           echo "BOT_TOKEN_MXT=${{ secrets.BOT_TOKEN_MXT }}" >> .env
+          echo "BOT_TOKEN_SATIRIKON=${{ secrets.BOT_TOKEN_SATIRIKON }}" >> .env
           
           echo "BOT_WEBHOOK_URL_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_URL_VAKHTANGOV }}" >> .env
           echo "BOT_WEBHOOK_SECRET_VAKHTANGOV=${{ secrets.BOT_WEBHOOK_SECRET_VAKHTANGOV }}" >> .env
@@ -90,6 +92,8 @@ jobs:
           echo "BOT_WEBHOOK_SECRET_LENSOV=${{ secrets.BOT_WEBHOOK_SECRET_LENSOV }}" >> .env
           echo "BOT_WEBHOOK_URL_MXT=${{ secrets.BOT_WEBHOOK_URL_MXT }}" >> .env
           echo "BOT_WEBHOOK_SECRET_MXT=${{ secrets.BOT_WEBHOOK_SECRET_MXT }}" >> .env
+          echo "BOT_WEBHOOK_URL_SATIRIKON=${{ secrets.BOT_WEBHOOK_URL_SATIRIKON }}" >> .env
+          echo "BOT_WEBHOOK_SECRET_SATIRIKON=${{ secrets.BOT_WEBHOOK_SECRET_SATIRIKON }}" >> .env
           
           echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> .env
           echo "TELEGRAM_API_URL=${{ secrets.TELEGRAM_API_URL }}" >> .env
