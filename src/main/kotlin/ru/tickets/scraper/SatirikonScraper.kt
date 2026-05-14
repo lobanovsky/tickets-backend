@@ -42,7 +42,7 @@ class SatirikonScraper : BaseWebScraper() {
             val html = fetchHtmlWithPlaywright(
                 performanceUrl,
                 waitUntil = WaitUntilState.DOMCONTENTLOADED,
-                waitForSelector = "[onclick*=\"afishaWidget.openModal\"]",
+                waitForSelector = TICKET_SELECTOR,
                 navigationTimeoutMs = 20_000.0,
                 selectorTimeoutMs = 10_000.0
             ) ?: return null
@@ -71,7 +71,7 @@ class SatirikonScraper : BaseWebScraper() {
         val doc = Jsoup.parse(html)
         val schedules = mutableListOf<ScrapedSchedule>()
 
-        doc.select("[onclick*=\"afishaWidget.openModal\"]").forEach { btn ->
+        doc.select(TICKET_SELECTOR).forEach { btn ->
             val container = btn.parents().firstOrNull { el ->
                 val text = el.text()
                 text.length <= SCHEDULE_CONTAINER_TEXT_LIMIT &&
@@ -85,10 +85,10 @@ class SatirikonScraper : BaseWebScraper() {
         }
 
         if (schedules.isEmpty()) {
-            val widgetCount = doc.select("[onclick*=\"afishaWidget\"]").size
+            val widgetCount = doc.select(TICKET_DIAGNOSTIC_SELECTOR).size
             if (widgetCount > 0) {
                 log.warn(
-                    "[satirikon] Расписание не распознано. Кнопок afishaWidget: " +
+                    "[satirikon] Расписание не распознано. Билетных элементов: " +
                         "$widgetCount. " +
                         "HTML фрагмент:\n${doc.body().html().take(1500)}"
                 )
@@ -100,5 +100,9 @@ class SatirikonScraper : BaseWebScraper() {
     companion object {
         private const val MAX_PAGES = 20
         private const val SCHEDULE_CONTAINER_TEXT_LIMIT = 500
+        private const val TICKET_SELECTOR =
+            "[onclick*=\"afishaWidget.openModal\"], a[href*=\"widget.afisha.yandex.ru\"]"
+        private const val TICKET_DIAGNOSTIC_SELECTOR =
+            "[onclick*=\"afishaWidget\"], a[href*=\"widget.afisha.yandex.ru\"]"
     }
 }

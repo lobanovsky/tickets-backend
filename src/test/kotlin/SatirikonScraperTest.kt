@@ -124,6 +124,20 @@ class SatirikonScraperTest {
         </article>
     """.trimIndent()
 
+    private fun yandexWidgetSlot(date: String, time: String, eventId: Int) = """
+        <article class="swiper-slide">
+          <div class="slot-header">
+            <span>$date</span>
+            <span>$time, Сб</span>
+          </div>
+          <div class="slot-meta">
+            <span>Сцена</span>
+            <a href="/kontakty/">"Планета КВН"</a>
+          </div>
+          <a href="https://widget.afisha.yandex.ru/w/sessions/$eventId" target="_blank">Купить билет</a>
+        </article>
+    """.trimIndent()
+
     @Test
     fun parseScheduleHtml_extractsDateAndTimeFromSlideWithButton() {
         val schedules = scraper.parseScheduleHtml(
@@ -202,6 +216,20 @@ class SatirikonScraperTest {
         )
         assertEquals(2, schedules.size)
         assertEquals(listOf("12.06", "06.07"), schedules.map { it.date })
+        assertEquals(listOf("19:00", "19:00"), schedules.map { it.time })
+        assertTrue(schedules.all { it.ticketsAvailable })
+    }
+
+    @Test
+    fun parseScheduleHtml_extractsYandexWidgetLinks() {
+        val schedules = scraper.parseScheduleHtml(
+            scheduleHtml(
+                yandexWidgetSlot("20.06", "19:00", 4001),
+                yandexWidgetSlot("21.06", "19:00", 4002),
+            )
+        )
+        assertEquals(2, schedules.size)
+        assertEquals(listOf("20.06", "21.06"), schedules.map { it.date })
         assertEquals(listOf("19:00", "19:00"), schedules.map { it.time })
         assertTrue(schedules.all { it.ticketsAvailable })
     }
