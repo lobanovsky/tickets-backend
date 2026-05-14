@@ -11,7 +11,9 @@ abstract class BaseWebScraper : WebScraper {
     protected fun fetchHtmlWithPlaywright(
         url: String,
         waitUntil: WaitUntilState = WaitUntilState.DOMCONTENTLOADED,
-        waitForSelector: String? = null
+        waitForSelector: String? = null,
+        navigationTimeoutMs: Double = 60_000.0,
+        selectorTimeoutMs: Double = 15_000.0
     ): String? {
         Playwright.create().use { playwright ->
             val browser = playwright.chromium().launch(
@@ -23,12 +25,12 @@ abstract class BaseWebScraper : WebScraper {
                 val page = browser.newPage()
                 page.navigate(url, Page.NavigateOptions()
                     .setWaitUntil(waitUntil)
-                    .setTimeout(60_000.0))
+                    .setTimeout(navigationTimeoutMs))
                 if (waitForSelector != null) {
                     try {
                         page.waitForSelector(waitForSelector, Page.WaitForSelectorOptions()
                             .setState(WaitForSelectorState.ATTACHED)
-                            .setTimeout(15_000.0))
+                            .setTimeout(selectorTimeoutMs))
                     } catch (_: Exception) {
                         // element not present on this page — return content as-is (0 slots)
                     }

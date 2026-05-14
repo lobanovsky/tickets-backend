@@ -96,6 +96,14 @@ class SatirikonScraperTest {
         </div>
     """.trimIndent()
 
+    private fun slideWithLink(date: String, time: String, eventId: Int) = """
+        <div class="swiper-slide">
+          <div class="event-date">$date</div>
+          <div class="event-time">$time</div>
+          <a href="#" onclick="afishaWidget.openModal({ event_id: $eventId })">Купить билет</a>
+        </div>
+    """.trimIndent()
+
     @Test
     fun parseScheduleHtml_extractsDateAndTimeFromSlideWithButton() {
         val schedules = scraper.parseScheduleHtml(
@@ -127,6 +135,30 @@ class SatirikonScraperTest {
         assertEquals(3, schedules.size)
         assertTrue(schedules.all { it.ticketsAvailable })
         assertEquals(listOf("15.05", "22.05", "29.05"), schedules.map { it.date })
+    }
+
+    @Test
+    fun parseScheduleHtml_extractsDateAndTimeFromLinkWithOnclick() {
+        val schedules = scraper.parseScheduleHtml(
+            scheduleHtml(slideWithLink("18.06", "20:00", 2001))
+        )
+        assertEquals(1, schedules.size)
+        assertEquals("18.06", schedules[0].date)
+        assertEquals("20:00", schedules[0].time)
+        assertTrue(schedules[0].ticketsAvailable)
+    }
+
+    @Test
+    fun parseScheduleHtml_extractsMixedOnclickElements() {
+        val schedules = scraper.parseScheduleHtml(
+            scheduleHtml(
+                slideWithButton("15.05", "19:00", 1001),
+                slideWithLink("18.06", "20:00", 2001),
+            )
+        )
+        assertEquals(2, schedules.size)
+        assertEquals(listOf("15.05", "18.06"), schedules.map { it.date })
+        assertTrue(schedules.all { it.ticketsAvailable })
     }
 
     @Test

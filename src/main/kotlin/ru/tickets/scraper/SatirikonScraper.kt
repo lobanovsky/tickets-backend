@@ -39,7 +39,13 @@ class SatirikonScraper : BaseWebScraper() {
 
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
         return try {
-            val html = fetchHtmlWithPlaywright(performanceUrl, WaitUntilState.LOAD) ?: return null
+            val html = fetchHtmlWithPlaywright(
+                performanceUrl,
+                waitUntil = WaitUntilState.DOMCONTENTLOADED,
+                waitForSelector = "[onclick*=\"afishaWidget.openModal\"]",
+                navigationTimeoutMs = 20_000.0,
+                selectorTimeoutMs = 10_000.0
+            ) ?: return null
             val schedules = parseScheduleHtml(html)
             if (schedules.isEmpty()) log.warn("[satirikon] Расписание не найдено для $performanceUrl")
             schedules
@@ -65,7 +71,7 @@ class SatirikonScraper : BaseWebScraper() {
         val doc = Jsoup.parse(html)
         val schedules = mutableListOf<ScrapedSchedule>()
 
-        doc.select("button[onclick*=\"afishaWidget.openModal\"]").forEach { btn ->
+        doc.select("[onclick*=\"afishaWidget.openModal\"]").forEach { btn ->
             val container = btn.parents().firstOrNull { el ->
                 val text = el.ownText() + " " + el.children().joinToString(" ") { it.ownText() }
                 dateRegex.containsMatchIn(text) && timeRegex.containsMatchIn(text)
@@ -80,7 +86,7 @@ class SatirikonScraper : BaseWebScraper() {
         if (schedules.isEmpty()) {
             log.warn(
                 "[satirikon] Расписание не распознано. Кнопок afishaWidget: " +
-                    "${doc.select("button[onclick*=\"afishaWidget\"]").size}. " +
+                    "${doc.select("[onclick*=\"afishaWidget\"]").size}. " +
                     "HTML фрагмент:\n${doc.body().html().take(1500)}"
             )
         }
