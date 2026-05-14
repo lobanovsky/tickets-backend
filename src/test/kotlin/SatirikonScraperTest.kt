@@ -104,6 +104,26 @@ class SatirikonScraperTest {
         </div>
     """.trimIndent()
 
+    private fun nestedSatirikonSlot(date: String, time: String, eventId: Int) = """
+        <article class="swiper-slide">
+          <div class="slot-header">
+            <span>
+              <strong>$date</strong>
+            </span>
+            <span>
+              <em>$time, Пт</em>
+            </span>
+          </div>
+          <div class="slot-meta">
+            <span>Сцена</span>
+            <a href="/kontakty/">"Дворец на Яузе"</a>
+          </div>
+          <div class="slot-action">
+            <button onclick="afishaWidget.openModal({ event_id: $eventId })">Купить билет</button>
+          </div>
+        </article>
+    """.trimIndent()
+
     @Test
     fun parseScheduleHtml_extractsDateAndTimeFromSlideWithButton() {
         val schedules = scraper.parseScheduleHtml(
@@ -170,5 +190,32 @@ class SatirikonScraperTest {
             )
         )
         assertTrue(schedules.all { it.ticketsAvailable })
+    }
+
+    @Test
+    fun parseScheduleHtml_extractsNestedSatirikonSlots() {
+        val schedules = scraper.parseScheduleHtml(
+            scheduleHtml(
+                nestedSatirikonSlot("12.06", "19:00", 3001),
+                nestedSatirikonSlot("06.07", "19:00", 3002),
+            )
+        )
+        assertEquals(2, schedules.size)
+        assertEquals(listOf("12.06", "06.07"), schedules.map { it.date })
+        assertEquals(listOf("19:00", "19:00"), schedules.map { it.time })
+        assertTrue(schedules.all { it.ticketsAvailable })
+    }
+
+    @Test
+    fun parseScheduleHtml_returnsEmptyWhenNoAfishaWidget() {
+        val schedules = scraper.parseScheduleHtml(
+            """
+                <html><body>
+                  <h2>О спектакле</h2>
+                  <p>Ближайшие показы отсутствуют.</p>
+                </body></html>
+            """.trimIndent()
+        )
+        assertTrue(schedules.isEmpty())
     }
 }

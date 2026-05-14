@@ -73,7 +73,8 @@ class SatirikonScraper : BaseWebScraper() {
 
         doc.select("[onclick*=\"afishaWidget.openModal\"]").forEach { btn ->
             val container = btn.parents().firstOrNull { el ->
-                val text = el.ownText() + " " + el.children().joinToString(" ") { it.ownText() }
+                val text = el.text()
+                text.length <= SCHEDULE_CONTAINER_TEXT_LIMIT &&
                 dateRegex.containsMatchIn(text) && timeRegex.containsMatchIn(text)
             } ?: btn.parent() ?: return@forEach
 
@@ -84,16 +85,20 @@ class SatirikonScraper : BaseWebScraper() {
         }
 
         if (schedules.isEmpty()) {
-            log.warn(
-                "[satirikon] Расписание не распознано. Кнопок afishaWidget: " +
-                    "${doc.select("[onclick*=\"afishaWidget\"]").size}. " +
-                    "HTML фрагмент:\n${doc.body().html().take(1500)}"
-            )
+            val widgetCount = doc.select("[onclick*=\"afishaWidget\"]").size
+            if (widgetCount > 0) {
+                log.warn(
+                    "[satirikon] Расписание не распознано. Кнопок afishaWidget: " +
+                        "$widgetCount. " +
+                        "HTML фрагмент:\n${doc.body().html().take(1500)}"
+                )
+            }
         }
         return schedules
     }
 
     companion object {
         private const val MAX_PAGES = 20
+        private const val SCHEDULE_CONTAINER_TEXT_LIMIT = 500
     }
 }
