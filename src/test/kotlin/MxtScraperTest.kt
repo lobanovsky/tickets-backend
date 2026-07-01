@@ -1,4 +1,5 @@
 import ru.tickets.scraper.MxtScraper
+import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -89,10 +90,11 @@ class MxtScraperTest {
 
     @Test
     fun parseScheduleHtml_extractsDatesTimesAndAvailability() {
+        // datetime должен быть в будущем: parseScheduleHtml отбрасывает прошедшие слоты
         val schedules = scraper.parseScheduleHtml(
             scheduleHtml(
-                slot("2026-05-17 19:00", "17 мая, Вс", "19:00", hasTickets = true),
-                slot("2026-05-18 19:00", "18 мая, Пн", "19:00", hasTickets = true)
+                slot("${LocalDate.now().plusDays(10)} 19:00", "17 мая, Вс", "19:00", hasTickets = true),
+                slot("${LocalDate.now().plusDays(11)} 19:00", "18 мая, Пн", "19:00", hasTickets = true)
             )
         )
 
@@ -105,7 +107,7 @@ class MxtScraperTest {
     @Test
     fun parseScheduleHtml_marksScheduleUnavailableWhenNoTickets() {
         val schedules = scraper.parseScheduleHtml(
-            scheduleHtml(slot("2026-06-24 19:00", "24 июн, Ср", "19:00", hasTickets = false))
+            scheduleHtml(slot("${LocalDate.now().plusDays(30)} 19:00", "24 июн, Ср", "19:00", hasTickets = false))
         )
 
         assertEquals(1, schedules.size)
