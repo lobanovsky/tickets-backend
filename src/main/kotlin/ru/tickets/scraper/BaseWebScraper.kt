@@ -23,6 +23,11 @@ abstract class BaseWebScraper : WebScraper {
             )
             browser.use {
                 val page = browser.newPage()
+                val blockedTypes = setOf("image", "media", "font")
+                page.route("**/*") { route ->
+                    if (route.request().resourceType() in blockedTypes) route.abort()
+                    else route.resume()
+                }
                 page.navigate(url, Page.NavigateOptions()
                     .setWaitUntil(waitUntil)
                     .setTimeout(navigationTimeoutMs))
