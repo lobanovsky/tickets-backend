@@ -109,7 +109,7 @@ class ScraperService(
                 log.error("[${scraper.theatreSlug}] Ошибка в цикле скрапера: ${e.message}")
             }
 
-            delay(Random.nextLong(5_000L, 30_000L).milliseconds)
+            delay(Random.nextLong(30_000L, 60_000L).milliseconds)
         }
     }
 }
