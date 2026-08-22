@@ -1,6 +1,5 @@
 package ru.tickets.scraper
 
-import com.microsoft.playwright.options.WaitUntilState
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -16,6 +15,8 @@ class MxtScraper : BaseWebScraper() {
     private val repertoireUrls = listOf("$baseUrl/repertuar/current/", "$baseUrl/repertuar/soon/")
     private val performanceLinkSelector = "a[href*=/repertuar/show/]"
     private val sceneRegex = Regex("(Основная сцена|Малая сцена|Новая сцена|Дворец на Яузе|Театриум на Серпуховке|Портретное фойе)")
+    private val buyTicketLabels = setOf("купить билет", "билеты")
+    private val unavailableTicketLabels = setOf("оставить заявку", "заявка")
 
     override fun scrapeRepertoire(): List<ScrapedPerformance> {
         val performances = mutableListOf<ScrapedPerformance>()
@@ -26,10 +27,7 @@ class MxtScraper : BaseWebScraper() {
                 log.info("[mxt] Для $repertoireUrl найдено ${pageUrls.size} страниц репертуара")
 
                 pageUrls.forEach { pageUrl ->
-                    val html = Jsoup.connect(pageUrl)
-                        .userAgent("Mozilla/5.0 (compatible; bot)")
-                        .get()
-                        .outerHtml()
+                    val html = loadDocument(pageUrl).outerHtml()
                     val parsed = parseRepertoireHtml(html)
                     log.info("[mxt] Для $pageUrl найдено ${parsed.size} карточек спектаклей")
                     parsed.forEach { performance ->
@@ -48,45 +46,88 @@ class MxtScraper : BaseWebScraper() {
 
     override fun scrapeSchedule(performanceUrl: String): List<ScrapedSchedule>? {
         return try {
-            val html = fetchHtmlWithPlaywright(performanceUrl, WaitUntilState.NETWORKIDLE) ?: return null
-            val schedules = parseScheduleHtml(html)
+            val schedules = parseScheduleHtml(loadDocument(performanceUrl).outerHtml()) ?: return null
             if (schedules.isEmpty()) log.warn("[mxt] Расписание не найдено для $performanceUrl")
             schedules
         } catch (e: Exception) {
-            log.error("[mxt] Ошибка при парсинге расписания $performanceUrl: ${e.message}")
+            log.error(
+                "[mxt] Ошибка при загрузке или парсинге расписания $performanceUrl " +
+                    "(${e.javaClass.simpleName}): ${e.message}",
+                e
+            )
             null
         }
     }
 
-    internal fun parseScheduleHtml(html: String): List<ScrapedSchedule> {
+    internal fun parseScheduleHtml(html: String): List<ScrapedSchedule>? {
         val doc = Jsoup.parse(html)
+        if (!isPerformancePage(doc)) {
+            log.warn("[mxt] Получена нераспознанная страница вместо страницы спектакля")
+            return null
+        }
+
+        val ticketsSection = doc.getElementById("tickets") ?: return emptyList()
+        val timeElements = ticketsSection.select("time[datetime]")
+        if (timeElements.isEmpty()) {
+            log.warn("[mxt] Найдена секция расписания без элементов time[datetime]")
+            return null
+        }
+
         val schedules = mutableListOf<ScrapedSchedule>()
-
-        doc.select("[data-tickets-button]").forEach { button ->
-            val container = button.parents().firstOrNull { it.selectFirst("time[datetime]") != null }
-                ?: return@forEach
-            val timeEl = container.selectFirst("time[datetime]") ?: return@forEach
-
-            val datetime = timeEl.attr("datetime") // "2026-05-14 19:00"
+        for (timeEl in timeElements) {
+            val datetime = timeEl.attr("datetime").trim() // "2026-05-14 19:00"
             val eventDate = runCatching { LocalDate.parse(datetime.substringBefore(" ")) }.getOrNull()
-            if (eventDate != null && eventDate.isBefore(LocalDate.now())) return@forEach
+            if (eventDate == null) {
+                log.warn("[mxt] Не удалось распознать дату показа: '$datetime'")
+                return null
+            }
+            if (eventDate.isBefore(LocalDate.now())) continue
+
+            val container = timeEl.parent()
+            if (container == null) {
+                log.warn("[mxt] Не найден контейнер показа для '$datetime'")
+                return null
+            }
             val timeStr = datetime.substringAfter(" ", "")
             val dateStr = timeEl.select("span").firstOrNull { it.attr("aria-hidden") != "true" }
                 ?.text()?.trim() ?: datetime.substringBefore(" ")
 
-            val desktopSpan = button.selectFirst("[data-tickets-desktop-button-text]")
-            val ticketsAvailable = desktopSpan?.text()?.trim() == desktopSpan?.attr("data-has-tickets-text")
+            val ticketsAvailable = parseAvailability(container, datetime) ?: return null
 
             schedules.add(ScrapedSchedule(date = dateStr, time = timeStr, ticketsAvailable = ticketsAvailable))
         }
-
-        if (schedules.isEmpty()) {
-            log.warn(
-                "[mxt] Расписание не распознано. Найдено кнопок: ${doc.select("[data-tickets-button]").size}. " +
-                    "Фрагмент HTML:\n${doc.body().html().take(1500)}"
-            )
-        }
         return schedules
+    }
+
+    private fun isPerformancePage(doc: Document): Boolean {
+        val pageUrl = doc.selectFirst("meta[property=og:url]")?.attr("content").orEmpty()
+        val title = doc.selectFirst("h1")?.text()?.trim().orEmpty()
+        return pageUrl.contains("/repertuar/show/") && title.isNotBlank()
+    }
+
+    private fun parseAvailability(container: Element, datetime: String): Boolean? {
+        val controls = container.select("button, a[data-tickets-button], a[href]")
+        if (controls.isEmpty()) return false
+
+        if (controls.any { control ->
+                val text = control.text().normalizeWhitespace().lowercase()
+                buyTicketLabels.any { label -> text.contains(label) } ||
+                    control.attr("onclick").contains("sessionId")
+            }
+        ) {
+            return true
+        }
+
+        if (controls.all { control ->
+                val text = control.text().normalizeWhitespace().lowercase()
+                unavailableTicketLabels.any { label -> text.contains(label) }
+            }
+        ) {
+            return false
+        }
+
+        log.warn("[mxt] Не удалось распознать билетный элемент для '$datetime': ${controls.text().take(200)}")
+        return null
     }
 
     internal fun parseRepertoireHtml(html: String): List<ScrapedPerformance> {
@@ -149,7 +190,9 @@ class MxtScraper : BaseWebScraper() {
 
     private fun loadDocument(url: String): Document {
         return Jsoup.connect(url)
-            .userAgent("Mozilla/5.0 (compatible; bot)")
+            .userAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36")
+            .timeout(15_000)
+            .maxBodySize(5 * 1024 * 1024)
             .get()
     }
 
