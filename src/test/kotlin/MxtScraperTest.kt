@@ -116,6 +116,22 @@ class MxtScraperTest {
     }
 
     @Test
+    fun parseScheduleHtml_doesNotTreatWaitlistSessionAsAvailableTickets() {
+        val schedules = assertNotNull(scraper.parseScheduleHtml(
+            scheduleHtml(
+                waitlistSlot("${LocalDate.now().plusDays(10)} 19:00", "08 сентября, Пт"),
+                waitlistSlot("${LocalDate.now().plusDays(20)} 19:00", "19 сентября, Сб"),
+                waitlistSlot("${LocalDate.now().plusDays(21)} 19:00", "20 сентября, Вс"),
+                sberSlot("${LocalDate.now().plusDays(50)} 19:00", "23 октября, Пт", hasTickets = false),
+                sberSlot("${LocalDate.now().plusDays(51)} 19:00", "24 октября, Сб", hasTickets = false)
+            )
+        ))
+
+        assertEquals(5, schedules.size)
+        assertTrue(schedules.none { it.ticketsAvailable })
+    }
+
+    @Test
     fun parseScheduleHtml_returnsEmptyListWhenScheduleMissing() {
         val schedules = assertNotNull(scraper.parseScheduleHtml(performanceHtml("<p>О спектакле</p>")))
 
@@ -204,6 +220,22 @@ class MxtScraperTest {
             </div>
         """.trimIndent()
     }
+
+    private fun waitlistSlot(datetime: String, dateDisplay: String): String = """
+        <div class="grid items-center gap-x-4 grid-cols-2">
+          <time datetime="$datetime">
+            <span class="lg:hidden">$dateDisplay</span>
+            <span class="hidden lg:inline">$dateDisplay</span>
+            <span aria-hidden="true"> ∙ </span>
+            <span>19:00</span>
+          </time>
+          <div>
+            <button onclick="widgetManager.appendWidget({ sessionId: 132306330 })">
+              <span>Оставить заявку</span><span>Заявка</span>
+            </button>
+          </div>
+        </div>
+    """.trimIndent()
 
     private fun slot(datetime: String, dateDisplay: String, time: String, hasTickets: Boolean): String {
         val buttonText = if (hasTickets) "Купить билет" else "Оставить заявку"

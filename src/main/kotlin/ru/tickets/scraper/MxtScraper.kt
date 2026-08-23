@@ -106,8 +106,18 @@ class MxtScraper : BaseWebScraper() {
     }
 
     private fun parseAvailability(container: Element, datetime: String): Boolean? {
-        val controls = container.select("button, a[data-tickets-button], a[href]")
+        val controls = container.select(
+            "button, a[data-tickets-button], a[href*=ticket], a[href*=bilet]"
+        )
         if (controls.isEmpty()) return false
+
+        if (controls.any { control ->
+                val text = control.text().normalizeWhitespace().lowercase()
+                unavailableTicketLabels.any { label -> text.contains(label) }
+            }
+        ) {
+            return false
+        }
 
         if (controls.any { control ->
                 val text = control.text().normalizeWhitespace().lowercase()
@@ -116,14 +126,6 @@ class MxtScraper : BaseWebScraper() {
             }
         ) {
             return true
-        }
-
-        if (controls.all { control ->
-                val text = control.text().normalizeWhitespace().lowercase()
-                unavailableTicketLabels.any { label -> text.contains(label) }
-            }
-        ) {
-            return false
         }
 
         log.warn("[mxt] Не удалось распознать билетный элемент для '$datetime': ${controls.text().take(200)}")
