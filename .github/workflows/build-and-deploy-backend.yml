@@ -141,7 +141,9 @@ jobs:
 
       - name: docker pull && up
         uses: appleboy/ssh-action@v1.2.2
+        timeout-minutes: 30
         with:
+          command_timeout: 25m
           host: ${{ secrets.DEPLOY_HOST_IP }}
           username: ${{ secrets.DEPLOY_HOST_USERNAME }}
           port: ${{ secrets.DEPLOY_HOST_PORT }}
