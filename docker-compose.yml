@@ -49,7 +49,6 @@ services:
       - "8078:8080"
     env_file:
       - .env
-      - auth.env
     networks:
         - tickets-network
 
