@@ -54,4 +54,10 @@ api-keys:
   lensov: ${LENSOV_API_KEY:lensov-secret}
   mxt: ${MXT_API_KEY:mxt-secret}
   satirikon: ${SATIRIKON_API_KEY:satirikon-secret}
-  admin: ${ADMIN_API_KEY:admin-secret}
+
+admin-auth:
+  username: ${ADMIN_USERNAME:}
+  password-hash: ${ADMIN_PASSWORD_HASH:}
+  session-secret: ${ADMIN_SESSION_SECRET:}
+  origin: ${ADMIN_ORIGIN:https://tix.lobanovsky.ru}
+  cookie-secure: ${ADMIN_COOKIE_SECURE:true}

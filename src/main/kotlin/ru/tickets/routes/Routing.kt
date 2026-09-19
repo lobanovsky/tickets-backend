@@ -7,6 +7,7 @@ import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import ru.tickets.db.DatabaseKey
+import ru.tickets.security.adminAuthRoutes
 import ru.tickets.domain.*
 import ru.tickets.models.*
 import ru.tickets.domain.TelegramSenderService
@@ -61,6 +62,7 @@ fun Application.configureRouting() {
             call.respondText("Tickets API is running")
         }
         route("/api") {
+            adminAuthRoutes()
             theatreRoutes(theatreService)
             userRoutes(userService, subscriptionService)
             performanceRoutes(performanceService)

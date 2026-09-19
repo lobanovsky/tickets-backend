@@ -17,7 +17,6 @@ services:
       LENSOV_API_KEY: ${LENSOV_API_KEY}
       MXT_API_KEY: ${MXT_API_KEY}
       SATIRIKON_API_KEY: ${SATIRIKON_API_KEY}
-      ADMIN_API_KEY: ${ADMIN_API_KEY}
       # telegram bot token
       BOT_TOKEN_VAKHTANGOV: ${BOT_TOKEN_VAKHTANGOV}
       BOT_TOKEN_RAMT: ${BOT_TOKEN_RAMT}
@@ -50,6 +49,7 @@ services:
       - "8078:8080"
     env_file:
       - .env
+      - auth.env
     networks:
         - tickets-network
 

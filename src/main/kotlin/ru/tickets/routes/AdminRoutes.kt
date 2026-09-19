@@ -10,7 +10,7 @@ import ru.tickets.models.ErrorResponse
 import ru.tickets.security.BotPrincipal
 
 fun Route.adminRoutes(subscriptionService: SubscriptionService, theatreService: TheatreService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         route("/admin") {
             get("/theatres/{slug}/subscriptions") {
                 val principal = call.principal<BotPrincipal>()!!

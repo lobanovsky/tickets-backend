@@ -6,7 +6,7 @@ import io.ktor.server.routing.*
 import ru.tickets.domain.TheatreService
 
 fun Route.theatreRoutes(theatreService: TheatreService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         get("/theatres") {
             call.respond(theatreService.findAll())
         }

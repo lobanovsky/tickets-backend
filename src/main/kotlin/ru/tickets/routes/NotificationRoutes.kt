@@ -10,7 +10,7 @@ import ru.tickets.security.BotPrincipal
 import java.util.*
 
 fun Route.notificationRoutes(notificationService: NotificationService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         get("/notifications/pending") {
             val principal = call.principal<BotPrincipal>()!!
             val slug = call.request.queryParameters["theatreSlug"] ?: principal.slug

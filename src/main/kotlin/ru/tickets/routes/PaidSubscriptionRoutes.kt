@@ -14,7 +14,7 @@ import java.time.LocalDate
 import java.util.UUID
 
 fun Route.paidSubscriptionRoutes(paidSubscriptionService: PaidSubscriptionService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         get("/users/{telegramId}/paid-subscription") {
             val telegramId = call.parameters["telegramId"]?.toLongOrNull()
                 ?: return@get call.respond(HttpStatusCode.BadRequest, ErrorResponse("BAD_REQUEST", "Invalid telegramId"))

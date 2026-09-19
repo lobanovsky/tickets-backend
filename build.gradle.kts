@@ -25,6 +25,8 @@ kotlin {
 dependencies {
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-auth")
+    implementation("io.ktor:ktor-server-sessions")
+    implementation("at.favre.lib:bcrypt:0.10.2")
     implementation("io.ktor:ktor-server-call-logging")
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-serialization-kotlinx-json")

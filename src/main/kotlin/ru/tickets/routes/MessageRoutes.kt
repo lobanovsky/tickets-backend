@@ -11,7 +11,7 @@ import ru.tickets.models.requests.SendMessageRequest
 import ru.tickets.security.BotPrincipal
 
 fun Route.messageRoutes(telegramSenderService: TelegramSenderService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         post("/admin/messages/send/user/{telegramId}") {
             val principal = call.principal<BotPrincipal>()!!
             if (!principal.isAdmin) return@post call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", "Forbidden"))

@@ -6,7 +6,31 @@ on:
       - master
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15.3
+        env:
+          POSTGRES_DB: tickets
+          POSTGRES_USER: tickets
+          POSTGRES_PASSWORD: tickets
+        ports:
+          - 5455:5432
+        options: >-
+          --health-cmd "pg_isready -U tickets"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew test
+
   build:
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -62,7 +86,6 @@ jobs:
           echo "DB_USER=${{ secrets.DB_USER }}" >> .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           
-          echo "ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}" >> .env
           
           echo "VAKHTANGOV_API_KEY=${{ secrets.VAKHTANGOV_API_KEY }}" >> .env
           echo "RAMT_API_KEY=${{ secrets.RAMT_API_KEY }}" >> .env
@@ -98,11 +121,23 @@ jobs:
           echo "TELEGRAM_API_KEY=${{ secrets.TELEGRAM_API_KEY }}" >> .env
           echo "TELEGRAM_API_URL=${{ secrets.TELEGRAM_API_URL }}" >> .env
 
+      - name: Check persistent authentication configuration
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.DEPLOY_HOST_IP }}
+          username: ${{ secrets.DEPLOY_HOST_USERNAME }}
+          port: ${{ secrets.DEPLOY_HOST_PORT }}
+          key: ${{ secrets.DEPLOY_HOST_KEY }}
+          script: |
+            set -eu
+            test -s "${{ secrets.DEPLOY_HOST_PROJECT_PATH }}/auth.env"
+
       - name: copy files to host
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DEPLOY_HOST_IP }}
           username: ${{ secrets.DEPLOY_HOST_USERNAME }}
+          port: ${{ secrets.DEPLOY_HOST_PORT }}
           key: ${{ secrets.DEPLOY_HOST_KEY }}
           source: ".env, docker-compose.yml"
           target: ${{ secrets.DEPLOY_HOST_PROJECT_PATH }}
@@ -112,6 +147,7 @@ jobs:
         with:
           host: ${{ secrets.DEPLOY_HOST_IP }}
           username: ${{ secrets.DEPLOY_HOST_USERNAME }}
+          port: ${{ secrets.DEPLOY_HOST_PORT }}
           key: ${{ secrets.DEPLOY_HOST_KEY }}
           script: |
             echo ${{ secrets.DOCKER_TOKEN }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin

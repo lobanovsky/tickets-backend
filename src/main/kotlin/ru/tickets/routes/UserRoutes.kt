@@ -12,7 +12,7 @@ import ru.tickets.models.requests.SyncUserRequest
 import ru.tickets.security.BotPrincipal
 
 fun Route.userRoutes(userService: UserService, subscriptionService: SubscriptionService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         post("/users/sync") {
             val principal = call.principal<BotPrincipal>()!!
             val req = call.receive<SyncUserRequest>()

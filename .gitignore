@@ -21,3 +21,8 @@ posgres.local/var/
 
 # OS
 .DS_Store
+auth.env
+auth.env.*
+
+.env
+.env.*

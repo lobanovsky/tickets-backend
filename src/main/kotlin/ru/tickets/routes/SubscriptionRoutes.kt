@@ -11,7 +11,7 @@ import ru.tickets.models.requests.UnsubscribeRequest
 import java.util.*
 
 fun Route.subscriptionRoutes(subscriptionService: SubscriptionService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         post("/subscriptions") {
             val req = call.receive<SubscribeRequest>()
             subscriptionService.subscribe(req.telegramId, UUID.fromString(req.performanceId))

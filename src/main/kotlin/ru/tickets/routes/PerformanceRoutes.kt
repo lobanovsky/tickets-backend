@@ -9,7 +9,7 @@ import ru.tickets.models.ErrorResponse
 import ru.tickets.security.BotPrincipal
 
 fun Route.performanceRoutes(performanceService: PerformanceService) {
-    authenticate("bot-key") {
+    authenticate("bot-key", "admin-session") {
         get("/theatres/{slug}/performances") {
             val principal = call.principal<BotPrincipal>()!!
             val slug = call.parameters["slug"]!!

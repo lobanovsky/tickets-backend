@@ -1,0 +1,10 @@
+
+auth.env
+auth.env.*
+.git/
+.env
+.env.*
+build/
+.gradle/
+logs/
+private/
