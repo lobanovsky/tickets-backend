@@ -2,6 +2,7 @@ package ru.tickets.domain
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.slf4j.LoggerFactory
 import ru.tickets.db.schema.PaidSubscriptions
 import ru.tickets.db.schema.Performances
 import ru.tickets.db.schema.Subscriptions
@@ -15,6 +16,8 @@ data class PerformanceRow(val id: UUID, val theatreId: UUID, val title: String, 
 
 class PerformanceService(private val database: Database) {
 
+    private val logger = LoggerFactory.getLogger(PerformanceService::class.java)
+
     suspend fun findTheatreIdBySlug(slug: String): UUID? = dbQuery(database) {
         Theatres.selectAll().where { Theatres.slug eq slug }.singleOrNull()?.get(Theatres.id)
     }
@@ -23,22 +26,36 @@ class PerformanceService(private val database: Database) {
         theatreSlug: String,
         telegramId: Long?
     ): List<PerformanceWithStatusResponse> = dbQuery(database) {
+        logger.info("performances DB transaction started: theatre=$theatreSlug")
+        var queryStartedAt = System.nanoTime()
         val theatreRow = Theatres.selectAll().where { Theatres.slug eq theatreSlug }.singleOrNull()
-            ?: return@dbQuery emptyList()
+        logger.info(
+            "performances DB query completed: stage=theatre, theatre=$theatreSlug, found=${theatreRow != null}, durationMs=${elapsedMs(queryStartedAt)}"
+        )
+        if (theatreRow == null) return@dbQuery emptyList()
         val theatreId = theatreRow[Theatres.id]
 
         val subscribedPerformanceIds: Set<UUID> = if (telegramId != null) {
+            queryStartedAt = System.nanoTime()
             val userRow = Users.selectAll().where { Users.telegramId eq telegramId }.singleOrNull()
+            logger.info(
+                "performances DB query completed: stage=user, theatre=$theatreSlug, found=${userRow != null}, durationMs=${elapsedMs(queryStartedAt)}"
+            )
             if (userRow != null) {
                 val userId = userRow[Users.id]
-                Subscriptions.selectAll()
+                queryStartedAt = System.nanoTime()
+                val ids = Subscriptions.selectAll()
                     .where { (Subscriptions.userId eq userId) and (Subscriptions.isActive eq true) }
                     .map { it[Subscriptions.performanceId] }
-                    .toSet()
+                logger.info(
+                    "performances DB query completed: stage=subscriptions, theatre=$theatreSlug, count=${ids.size}, durationMs=${elapsedMs(queryStartedAt)}"
+                )
+                ids.toSet()
             } else emptySet()
         } else emptySet()
 
-        Performances.selectAll()
+        queryStartedAt = System.nanoTime()
+        val result = Performances.selectAll()
             .where { (Performances.theatreId eq theatreId) and (Performances.isActive eq true) }
             .orderBy(Performances.title, SortOrder.ASC)
             .map { row ->
@@ -52,7 +69,13 @@ class PerformanceService(private val database: Database) {
                     isSubscribed = perfId in subscribedPerformanceIds
                 )
             }
+        logger.info(
+            "performances DB query completed: stage=performances, theatre=$theatreSlug, count=${result.size}, durationMs=${elapsedMs(queryStartedAt)}"
+        )
+        result
     }
+
+    private fun elapsedMs(startedAt: Long): Long = (System.nanoTime() - startedAt) / 1_000_000
 
     suspend fun findWithActiveSubscribers(theatreId: UUID): List<PerformanceRow> = dbQuery(database) {
         val today = LocalDate.now()

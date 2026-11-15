@@ -4,6 +4,7 @@ import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.CancellationException
 import ru.tickets.domain.PerformanceService
 import ru.tickets.models.ErrorResponse
 import ru.tickets.security.BotPrincipal
@@ -16,8 +17,29 @@ fun Route.performanceRoutes(performanceService: PerformanceService) {
             if (!principal.isAdmin && principal.slug != slug) {
                 return@get call.respond(HttpStatusCode.Forbidden, ErrorResponse("FORBIDDEN", null))
             }
+            val hasTelegramIdParameter = call.request.queryParameters.contains("telegramId")
             val telegramId = call.request.queryParameters["telegramId"]?.toLongOrNull()
-            call.respond(performanceService.findByTheatreWithSubscriptionStatus(slug, telegramId))
+            val startedAt = System.nanoTime()
+            call.application.log.info(
+                "performances request started: theatre=$slug, hasTelegramIdParameter=$hasTelegramIdParameter, hasValidTelegramId=${telegramId != null}"
+            )
+            try {
+                val performances = performanceService.findByTheatreWithSubscriptionStatus(slug, telegramId)
+                val elapsedMs = (System.nanoTime() - startedAt) / 1_000_000
+                call.application.log.info(
+                    "performances data loaded: theatre=$slug, count=${performances.size}, durationMs=$elapsedMs"
+                )
+                call.respond(performances)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val elapsedMs = (System.nanoTime() - startedAt) / 1_000_000
+                call.application.log.error(
+                    "performances request failed: theatre=$slug, durationMs=$elapsedMs",
+                    e
+                )
+                throw e
+            }
         }
     }
 }
